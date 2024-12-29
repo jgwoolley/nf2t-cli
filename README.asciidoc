@@ -1,6 +1,9 @@
 = nf2t-cli
 A Java CLI for parsing Apache NiFi FlowFiles.
 
+# How to Install
+
+This program is available in the Maven Central Repository: https://central.sonatype.com/artifact/com.yelloowstone.nf2t/nf2t-cli
 # How To Run
 
 [source,console]
