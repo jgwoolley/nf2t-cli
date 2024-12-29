@@ -1,0 +1,25 @@
+= nf2t-cli
+A Java CLI for parsing Apache NiFi FlowFiles.
+
+# How To Run
+
+[source,console]
+---
+$ java -jar target/nf2t-cli-0.0.2.jar
+org.apache.commons.cli.MissingOptionException: Missing required options: v, a, i, ousage: CommandLineParameters
+ -a,--action <arg>    The action <package,unpackage>.
+ -h,--help            Shows help information.
+ -i,--in <arg>        The input path. For unpackage, a directory or file
+                      containing a FlowFileStream. For package, a
+                      directory or file containing FlowFile content.
+ -o,--out <arg>       The output path. For unpackage, a directory
+                      containing the FlowFile content. For package, a
+                      directory where the "flowFiles.pkg" will be created
+                      or the name of the file.
+ -v,--version <arg>   The Apache FlowFile version <1,2,3>.
+---
+
+# How to Build
+
+Run the ./update.sh script to update the versions of the project.
+Run the ./build.sh to build the project and get the maven.zip file to upload to maven central repository.
