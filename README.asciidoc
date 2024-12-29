@@ -1,10 +1,11 @@
 = nf2t-cli
 A Java CLI for parsing Apache NiFi FlowFiles.
 
-# How to Install
+== How to Install
 
 This program is available in the Maven Central Repository: https://central.sonatype.com/artifact/com.yelloowstone.nf2t/nf2t-cli
-# How To Run
+
+== How To Run
 
 [source,console]
 ---
@@ -22,7 +23,7 @@ org.apache.commons.cli.MissingOptionException: Missing required options: v, a, i
  -v,--version <arg>   The Apache FlowFile version <1,2,3>.
 ---
 
-# How to Build
+== How to Build
 
 Run the ./update.sh script to update the versions of the project.
 Run the ./build.sh to build the project and get the maven.zip file to upload to maven central repository.
