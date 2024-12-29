@@ -1,4 +1,7 @@
 = nf2t-cli
+
+== Description
+
 A Java CLI for parsing Apache NiFi FlowFiles.
 
 == How to Install
