@@ -18,18 +18,29 @@ This program is available in the Maven Central Repository: link:https://central.
 
 [source,console]
 ----
-$ java -jar target/nf2t-cli-0.0.2.jar
-org.apache.commons.cli.MissingOptionException: Missing required options: v, a, i, ousage: CommandLineParameters
- -a,--action <arg>    The action <package,unpackage>.
- -h,--help            Shows help information.
- -i,--in <arg>        The input path. For unpackage, a directory or file
-                      containing a FlowFileStream. For package, a
-                      directory or file containing FlowFile content.
- -o,--out <arg>       The output path. For unpackage, a directory
-                      containing the FlowFile content. For package, a
-                      directory where the "flowFiles.pkg" will be created
-                      or the name of the file.
- -v,--version <arg>   The Apache FlowFile version <1,2,3>.
+$ java -jar target/nf2t-cli-0.0.4.jar --help
+Usage: nf2t [-hV] [COMMAND]
+A Java CLI for parsing Apache NiFi FlowFiles.
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+Commands:
+  generateSchema
+  package
+  unpackage
+----
+
+[source,console]
+----
+$ java -jar ./target/nf2t-cli-0.0.3.jar package
+Missing required options: '--in=<arg1>', '--out=<arg2>'
+Usage: nf2t package -i=<arg1> -o=<arg2> [-v=<arg0>]
+  -i, --in=<arg1>        The input path. For package, a directory or file
+                           containing FlowFile content.
+  -o, --out=<arg2>       The output path.For package, a directory where the
+                           flowFiles.pkg will be created or the name of the
+                           file.
+  -v, --version=<arg0>   This is the FlowFile version of the file this packaged
+                           or unpackaged.
 ----
 
 == How to Build

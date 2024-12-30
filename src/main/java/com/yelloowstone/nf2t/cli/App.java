@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,70 +12,127 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.nifi.flowfile.attributes.CoreAttributes;
 import org.apache.nifi.util.FlowFilePackager;
-import org.apache.nifi.util.FlowFilePackagerV1;
-import org.apache.nifi.util.FlowFilePackagerV2;
-import org.apache.nifi.util.FlowFilePackagerV3;
 import org.apache.nifi.util.FlowFileUnpackager;
-import org.apache.nifi.util.FlowFileUnpackagerV1;
-import org.apache.nifi.util.FlowFileUnpackagerV2;
-import org.apache.nifi.util.FlowFileUnpackagerV3;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.factories.SchemaFactoryWrapper;
 
-public class App {
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 
+@Command(name = "nf2t", mixinStandardHelpOptions = true, description = "A Java CLI for parsing Apache NiFi FlowFiles.")
+public class App implements Callable<Integer> {
 	public static final String FILE_SIZE_ATTRIBUTE = "size";
 	
-	private final PrintStream stderr;
-	private final PrintStream stdout;
+    @Spec private CommandSpec spec;
+	private final FlowFilePackageVersions packageVersions;
 	private final ObjectMapper mapper;
-	private final Options options;
-	private final Map<Integer, Supplier<FlowFileUnpackager>> unpackagers;
-	private final Map<Integer, Supplier<FlowFilePackager>> packagers;
 
-	public App(final PrintStream stdout, final PrintStream stderr) {
-		this.stdout = stdout;
-		this.stderr = stderr;
+	public App() {
+		super();
+		this.packageVersions = new FlowFilePackageVersions();
 		this.mapper = new ObjectMapper();
-		this.options = new Options();
-		this.unpackagers = Map.of(3, () -> new FlowFileUnpackagerV3(), 2, () -> new FlowFileUnpackagerV2(), 1,
-				() -> new FlowFileUnpackagerV1());
-		this.packagers = Map.of(3, () -> new FlowFilePackagerV3(), 2, () -> new FlowFilePackagerV2(), 1,
-				() -> new FlowFilePackagerV1());
-
-		if (!this.unpackagers.keySet().containsAll(this.packagers.keySet())) {
-			throw new IllegalArgumentException("Provided versions do not match.");
-		}
-
-		final List<String> actions = List.of(Action.values()).stream().map(x -> x.toString().toLowerCase()).sorted()
-				.collect(Collectors.toList());
-
-		options.addOption("h", "help", false, "Shows help information.");
-		options.addRequiredOption("v", "version", true, FlowFileStreamResult.VERSION_DESCRIPTION);
-		options.addRequiredOption("a", "action", true, "The action <" + String.join(",", actions) + ">.");
-		options.addRequiredOption("i", "in", true, FlowFileStreamResult.INPUTPATH_DESCRIPTION);
-		options.addRequiredOption("o", "out", true, FlowFileStreamResult.OUTPUTPATH_DESCRIPTION);
 	}
+	
+	@Command(name = "unpackage")
+	public Integer unpackageFlowFileStream(@Option(names = {"-v", "--version"}, defaultValue="3", description= {FlowFileStreamResult.VERSION_DESCRIPTION + " incoming FlowFile."}) final int version, @Option(names= {"-i", "--in"}, description="The input path." + FlowFileStreamResult.INPUTPATH_UNPACKAGE_DESCRIPTION, required=true) final String inputOption, @Option(names= {"-o", "--out"}, description="The output path." + FlowFileStreamResult.OUTPUTPATH_UNPACKAGE_DESCRIPTION, required=true) final String outputOption, @Option(names= {"-u", "--uuid"}, description = { "Will make all unpackaged content filename(s) UUIDs, to prevent clobering." }, defaultValue="true") final boolean uuidFilenames) {
+		final FlowFileStreamResult result = createResult(version, inputOption, outputOption);
+		
+		// Unpack Frequently Used Variables
+		final Path inputPath = result.getInputPath();
+		final Path outputPath = result.getOutputPath();
+		final List<FlowFileErrorResult> errors = result.getErrors();
+		final List<FlowFileResult> outputFiles = result.getOutputFiles();
+		
+		// Get Packager For Current Version
+		final FlowFilePackageVersion packageVersion = packageVersions.get(version);
+		if(packageVersion == null) {
+			errors.add(new FlowFileErrorResult(new Exception("Bad FlowFile Package Version Given: " + version), inputPath));
+			printResult(result);		
+			return 1;
+		}
+		
+		if (!Files.isDirectory(inputPath)) {
+			final Exception exception = new FileNotFoundException(
+					"Flowfile content not found at path: " + inputPath.toAbsolutePath().toString());
+			errors.add(new FlowFileErrorResult(exception, inputPath));
+		} else if (!Files.isDirectory(outputPath)) {
+			final Exception exception = new FileNotFoundException(
+					"Output path not found: " + outputPath.toAbsolutePath().toString());
+			errors.add(new FlowFileErrorResult(exception, inputPath));
+		} else {
+			final FlowFileUnpackager unpackager = packageVersion.getUnpackager();
 
-	public void packageFiles(final FlowFileStreamResult result) {
+			try (final Stream<Path> files = Files.list(inputPath)) {
+				files.forEach(flowFilePath -> {
+					try {
+						try(final InputStream in = Files.newInputStream(flowFilePath)) {
+							do {
+								final Path contentPath = result.getOutputPath().resolve(UUID.randomUUID().toString() + ".dat");
+								FlowFileResult flowFileResult = null;
+								try(OutputStream out = Files.newOutputStream(contentPath)) {
+									final Map<String, String> attributes = unpackager.unpackageFlowFile(in, out);
+									final long contentSize = Files.size(contentPath);
+									flowFileResult = new FlowFileResult(flowFilePath, contentPath, attributes, contentSize);
+									outputFiles.add(flowFileResult);
+								} catch(Exception e) {
+									throw new Exception("Could not unpackage " + flowFilePath, e);
+								}
+								
+								if(uuidFilenames && flowFileResult != null) {
+									String filename = flowFileResult.getAttributes().get(CoreAttributes.FILENAME.key());
+									if(filename != null) {
+										Path newContentPath = contentPath.getParent().resolve(filename);
+										Files.move(contentPath, newContentPath);
+										flowFileResult.setContentPath(newContentPath);
+									}
+								}
+								
+							} while(unpackager.hasMoreData());
+						}							
+					} catch (Exception e) {
+						errors.add(new FlowFileErrorResult(e, flowFilePath));
+					}
+				});
+			} catch (IOException e) {
+				errors.add(new FlowFileErrorResult(e, inputPath));
+			}
+		}
+		
+		if(printResult(result)) {
+			return 1;
+		}
+		
+		return 0;
+	}
+		
+	@Command(name = "package")
+	public Integer packageFlowFileStream(@Option(names = {"-v", "--version"}, defaultValue="3", description={FlowFileStreamResult.VERSION_DESCRIPTION + " resulting FlowFile."}) final int version, @Option(names= {"-i", "--in"}, description="The input path." + FlowFileStreamResult.INPUTPATH_PACKAGE_DESCRIPTION, required=true) final String inputOption, @Option(names= {"-o", "--out"}, description="The output path." + FlowFileStreamResult.OUTPUTPATH_PACKAGE_DESCRIPTION, required=true) final String outputOption) {
+		final FlowFileStreamResult result = createResult(version, inputOption, outputOption);
+		
+		// Unpack Frequently Used Variables
 		final Path inputPath = result.getInputPath();
 		Path outputPath = result.getOutputPath();
-
+		final List<FlowFileErrorResult> errors = result.getErrors();
+		
+		// Get Packager For Current Version
+		final FlowFilePackageVersion packageVersion = packageVersions.get(version);
+		if(packageVersion == null) {
+			errors.add(new FlowFileErrorResult(new Exception("Bad FlowFile Package Version Given: " + version), inputPath));
+			printResult(result);		
+			return 1;
+		}
+		
 		if (Files.isDirectory(outputPath)) {
 			outputPath = outputPath.resolve(FlowFileStreamResult.FLOWFILE_DEFAULT_FILENAME);
 			result.setOutputPath(outputPath);
@@ -87,30 +143,21 @@ public class App {
 			contentPaths.add(inputPath);
 		} else if (Files.isDirectory(inputPath)) {
 			try {
-				Files.list(inputPath).forEach(x -> contentPaths.add(x));
+				Files.list(inputPath).filter(Files::isRegularFile).forEach(x -> contentPaths.add(x));
 			} catch (IOException e) {
-				result.getErrors().add(new ErrorResult(e, outputPath));
-				e.printStackTrace(this.stderr);
-				return;
+				result.getErrors().add(new FlowFileErrorResult(e, outputPath));
+				printResult(result);		
+				return 1;
 			}
 		} else {
 			final Exception exception = new FileNotFoundException(
 					"Flowfile content not found at path: " + inputPath.toAbsolutePath().toString());
-			result.getErrors().add(new ErrorResult(exception, inputPath));
-			exception.printStackTrace(this.stderr);
-			return;
+			result.getErrors().add(new FlowFileErrorResult(exception, inputPath));
+			printResult(result);		
+			return 1;
 		}
 
-		final int version = result.getVersion();
-
-		final FlowFilePackager packager = this.packagers.get(version).get();
-		if (packager == null) {
-			final Exception exception = new IllegalArgumentException(
-					"No FlowFilePackager available for given version: " + version);
-			result.getErrors().add(new ErrorResult(exception, inputPath));
-			exception.printStackTrace(this.stderr);
-			return;
-		}
+		final FlowFilePackager packager = packageVersion.getPackager();		
 
 		try (OutputStream outputStream = Files.newOutputStream(outputPath)) {
 			for (Path contentPath : contentPaths) {
@@ -127,125 +174,64 @@ public class App {
 					}
 
 				} catch (IOException e) {
-					result.getErrors().add(new ErrorResult(e, contentPath));
-					e.printStackTrace(this.stderr);
-					break;
+					result.getErrors().add(new FlowFileErrorResult(e, contentPath));
+					printResult(result);		
+					return 1;
 				}
 			}
 		} catch (IOException e) {
-			result.getErrors().add(new ErrorResult(e, outputPath));
-			e.printStackTrace(this.stderr);
-			return;
+			result.getErrors().add(new FlowFileErrorResult(e, outputPath));
+			printResult(result);		
+			return 1;
 		}
+
+		if(printResult(result)) {
+			return 1;
+		}
+		
+		return 0;
 	}
 
-	public void unpackageFiles(final FlowFileStreamResult result) {
-		final Path inputPath = result.getInputPath();
-		final Path outputPath = result.getOutputPath();
-		final List<ErrorResult> errors = result.getErrors();
-		final int version = result.getVersion();
-		final List<FlowFileResult> outputFiles = result.getOutputFiles();
-
-		if (!Files.isDirectory(inputPath)) {
-			final Exception exception = new FileNotFoundException(
-					"Flowfile content not found at path: " + inputPath.toAbsolutePath().toString());
-			errors.add(new ErrorResult(exception, inputPath));
-		} else if (!Files.isDirectory(outputPath)) {
-			final Exception exception = new FileNotFoundException(
-					"Output path not found: " + outputPath.toAbsolutePath().toString());
-			errors.add(new ErrorResult(exception, inputPath));
-		} else {
-			final FlowFileUnpackager unpackager = this.unpackagers.get(version).get();
-
-			try (final Stream<Path> files = Files.list(inputPath)) {
-				files.forEach(flowFilePath -> {
-					try {
-						try(final InputStream in = Files.newInputStream(flowFilePath)) {
-							do {
-								final Path contentPath = result.getOutputPath().resolve(UUID.randomUUID().toString());
-								try(OutputStream out = Files.newOutputStream(contentPath)) {
-									final Map<String, String> attributes = unpackager.unpackageFlowFile(in, out);
-									final long contentSize = Files.size(contentPath);
-									FlowFileResult flowFileResult = new FlowFileResult(flowFilePath, contentPath, attributes, contentSize);
-									outputFiles.add(flowFileResult);
-								} catch(Exception e) {
-									throw new Exception("Could not unpackage " + flowFilePath, e);
-								}
-																
-							} while(unpackager.hasMoreData());
-						}							
-					} catch (Exception e) {
-						errors.add(new ErrorResult(e, flowFilePath));
-						e.printStackTrace(stderr);
-					}
-				});
-			} catch (IOException e) {
-				errors.add(new ErrorResult(e, inputPath));
-				e.printStackTrace(this.stderr);
-			}
-		}
-	}
-
-	public void generateSchema() throws JsonProcessingException {
+	@Command(name = "generateSchema")
+	public Integer generateSchema() throws JsonProcessingException {
 		SchemaFactoryWrapper visitor = new SchemaFactoryWrapper();
 		mapper.acceptJsonFormatVisitor(FlowFileStreamResult.class, visitor);
-		JsonSchema personSchema = visitor.finalSchema();
-		this.stdout.print(this.mapper.writer().writeValueAsString(personSchema));
+		JsonSchema personSchema = visitor.finalSchema();		
+		spec.commandLine().getOut().println(this.mapper.writer().writeValueAsString(personSchema));
+		return 0;
 	}
 	
-	public FlowFileStreamResult parse(final CommandLineParser parser, final String[] args) {
+	
+	@Override
+	public Integer call() throws Exception {
+	    spec.commandLine().getOut().println("Subcommand needed: 'unpackage', 'package' or 'generateSchema'");
+	    return 1;
+	}
+	
+	public FlowFilePackageVersions getPackageVersions() {
+		return packageVersions;
+	}
+
+	public boolean printResult(final FlowFileStreamResult result) {
 		try {
-			final CommandLine commandLine = parser.parse(this.options, args);
-			if (commandLine.hasOption("h")) {
-				final HelpFormatter formatter = new HelpFormatter();
-				formatter.printHelp("CommandLineParameters", this.options);
-				return null;
-			}
-
-			final String inputOption = commandLine.getOptionValue("i");
-			final String outputOption = commandLine.getOptionValue("o");
-
-			final Path inputPath = Paths.get(inputOption);
-			final Path outputPath = Paths.get(outputOption != null ? outputOption : inputOption);
-			final int version = Integer.parseInt(commandLine.getOptionValue("v"));
-
-			final String actionString = commandLine.getOptionValue("a").toUpperCase();
-			final Action action = Action.valueOf(actionString);
-
-			long unixTime = System.currentTimeMillis() / 1000L;
-			final FlowFileStreamResult result = new FlowFileStreamResult(version, inputPath, outputPath, unixTime);
-
-			if (Action.PACKAGE == action) {
-				packageFiles(result);
-			} else if (Action.UNPACKAGE == action) {
-				unpackageFiles(result);
-			}
-			
-			if(Action.SCHEMA == action) {
-				generateSchema();
-			} else {
-				this.stdout.print(this.mapper.writer().writeValueAsString(result));
-			}
-
-			return result;
-
-		} catch (ParseException | JsonProcessingException e) {
-			this.stderr.print(e);
-			final HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp("CommandLineParameters", this.options);
+			String x = this.mapper.writer().writeValueAsString(result);
+			spec.commandLine().getOut().println(x);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace(spec.commandLine().getErr());
+			return true;
 		}
-
-		return null;
+		
+		return false;
 	}
+		
+	public static FlowFileStreamResult createResult(final int version, final String inputOption, final String outputOption) {
+		final Path inputPath = Paths.get(inputOption == null ? ".": inputOption);
+		final Path outputPath = outputOption == null ? inputPath : Paths.get(outputOption) ;
 
-	public Map<Integer, Supplier<FlowFileUnpackager>> getUnpackagers() {
-		return unpackagers;
+		long unixTime = System.currentTimeMillis() / 1000L;
+		return new FlowFileStreamResult(version, inputPath, outputPath, unixTime);
 	}
-
-	public Map<Integer, Supplier<FlowFilePackager>> getPackagers() {
-		return packagers;
-	}
-
+	
 	public static long updateDefaultAttributes(Map<String, String> attributes, Path path) throws IOException {
 		final long contentSize = Files.size(path);
 
@@ -256,11 +242,9 @@ public class App {
 
 		return contentSize;
 	}
-
+	
 	public static void main(String[] args) {
-		final CommandLineParser parser = new DefaultParser();
-		final App app = new App(System.out, System.err);
-		app.parse(parser, args);
-
-	}
+	    int rc = new CommandLine(new App()).execute(args);
+	    System.exit(rc);
+	  }
 }

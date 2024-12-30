@@ -1,10 +1,10 @@
 package com.yelloowstone.nf2t.cli;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -15,8 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
 import org.apache.nifi.util.FlowFilePackager;
 import org.apache.nifi.util.FlowFileUnpackager;
 import org.junit.Assert;
@@ -24,6 +22,8 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+
+import picocli.CommandLine;
 
 public class AppTest {
 	private static final int[] versions = new int[] { 3, 2, 1 };
@@ -78,17 +78,16 @@ public class AppTest {
 					Files.writeString(contentPath.resolve(example), "Hello World!");
 				}
 
-				final ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+				final App app = new App();
+				StringWriter sw = new StringWriter();
+				CommandLine cmd = new CommandLine(app);
+				cmd.setOut(new PrintWriter(sw));
 
-				final App app = new App(new PrintStream(stdout), System.err);
-				final CommandLineParser parser = new DefaultParser();
+				cmd.execute("package", "--version", Integer.toString(version), "--in", contentPath.toString(), "--out", packagedPath.toString());
 
-				app.parse(parser, new String[] { "--action", "package", "--version", Integer.toString(version), "--in",
-						contentPath.toString(), "--out", packagedPath.toString() });
+				final FlowFileStreamResult result = reader.readValue(sw.toString(), FlowFileStreamResult.class);
 
-				final FlowFileStreamResult result = reader.readValue(stdout.toString(), FlowFileStreamResult.class);
-
-				final FlowFileUnpackager unpackager = app.getUnpackagers().get(version).get();
+				final FlowFileUnpackager unpackager = app.getPackageVersions().get(version).getUnpackager();
 
 				try (InputStream in = Files.newInputStream(result.getOutputPath())) {
 					while (true) {
@@ -105,8 +104,8 @@ public class AppTest {
 					e.printStackTrace();
 				}
 
-				app.parse(parser, new String[] { "--action", "unpackage", "--version", Integer.toString(version),
-						"--in", packagedPath.toString(), "--out", unpackagedPath.toString() });
+				cmd.execute("unpackage", "--version", Integer.toString(version),
+						"--in", packagedPath.toString(), "--out", unpackagedPath.toString());
 
 			}
 		} finally {
@@ -148,12 +147,13 @@ public class AppTest {
 				Files.createDirectories(contentPath);
 				Files.createDirectories(packagedPath);
 				Files.createDirectories(unpackagedPath);
-
-				final ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-
-				final App app = new App(new PrintStream(stdout), System.err);
-
-				final FlowFilePackager packager = app.getPackagers().get(version).get();
+				
+				final App app = new App();
+				final StringWriter sw = new StringWriter();
+				final CommandLine cmd = new CommandLine(app);
+				cmd.setOut(new PrintWriter(sw));
+				
+				final FlowFilePackager packager = app.getPackageVersions().get(version).getPackager();
 
 				for (String example : examples) {
 					Path examplePath = contentPath.resolve(example);
@@ -176,13 +176,11 @@ public class AppTest {
 					}
 				}
 
-				final CommandLineParser parser = new DefaultParser();
+				cmd.execute("unpackage", "--version", Integer.toString(version),
+						"--in", packagedPath.toString(), "--out", unpackagedPath.toString());
 
-				app.parse(parser, new String[] { "--action", "unpackage", "--version", Integer.toString(version),
-						"--in", packagedPath.toString(), "--out", unpackagedPath.toString() });
-
-				System.out.println("\t" + stdout.toString());
-				final FlowFileStreamResult result = reader.readValue(stdout.toString(), FlowFileStreamResult.class);
+				System.out.println("\t" + sw.toString());
+				final FlowFileStreamResult result = reader.readValue(sw.toString(), FlowFileStreamResult.class);
 
 				successes += result.getOutputFiles().size();
 			}

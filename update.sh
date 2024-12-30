@@ -1,2 +1,2 @@
-mvn versions:set -DnewVersion=0.0.3
+mvn versions:set -DnewVersion=0.0.4
 mvn versions:commit

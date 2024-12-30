@@ -5,14 +5,23 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public class FlowFileResult {
+	
+	@JsonPropertyDescription("Represents the location of the Packaged FlowFile.")
 	@JsonProperty("flowFilePath")
 	private final Path flowFilePath;
+	
+	@JsonPropertyDescription("Represents the location of the FlowFile Content.")
 	@JsonProperty("contentPath")
-	private final Path contentPath;
+	private Path contentPath;
+	
+	@JsonPropertyDescription("Represents the FlowFile Attributes.")
 	@JsonProperty("attributes")
 	private final Map<String,String> attributes;
+	
+	@JsonPropertyDescription("Represents the size of the FlowFile Content.")
 	@JsonProperty("contentSize")
 	private final long contentSize;
 	
@@ -38,5 +47,9 @@ public class FlowFileResult {
 
 	public long getContentSize() {
 		return contentSize;
+	}
+
+	public void setContentPath(Path contentPath) {
+		this.contentPath = contentPath;
 	}
 }
