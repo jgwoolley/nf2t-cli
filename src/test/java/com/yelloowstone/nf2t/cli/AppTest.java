@@ -161,7 +161,7 @@ public class AppTest {
 					Files.write(examplePath, content);
 				}
 
-				final Path flowFileStreamPath = packagedPath.resolve(App.FLOWFILE_DEFAULT_FILENAME);
+				final Path flowFileStreamPath = packagedPath.resolve(FlowFileStreamResult.FLOWFILE_DEFAULT_FILENAME);
 				
 				try (OutputStream out = Files.newOutputStream(flowFileStreamPath)) {					
 					for(Path path: Files.list(contentPath).collect(Collectors.toList())) {

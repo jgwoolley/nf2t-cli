@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.yelloowstone.nf2t</groupId>
 	<artifactId>nf2t-cli</artifactId>
-	<version>0.0.2</version>
+	<version>0.0.3</version>
 
 	<name>nf2t-cli</name>
 	<description>A Java CLI for parsing Apache NiFi FlowFiles.</description>
@@ -66,6 +66,11 @@
 			<artifactId>jackson-databind</artifactId>
 			<version>2.15.3</version>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.module</groupId>
+			<artifactId>jackson-module-jsonSchema</artifactId>
+			<version>2.18.2</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -76,7 +81,8 @@
 				<configuration>
 					<!--
 					https://stackoverflow.com/questions/50919125/maven-shade-plugin-remove-original -->
-					<outputFile>${project.build.directory}/${project.build.finalName}.jar</outputFile>
+					<outputFile>
+						${project.build.directory}/${project.build.finalName}.jar</outputFile>
 					<filters>
 						<filter>
 							<artifact>*:*</artifact>

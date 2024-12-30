@@ -4,14 +4,20 @@
 
 A Java CLI for parsing Apache NiFi FlowFiles.
 
+== Background
+
+While the Apache Foundation has its own Unpackager (link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[nifi-flowfile-packager]). It lacks a packager, and dumps all attributes into their own text files which is a little messy for large projects.
+
+I've developed several versions of this project over the years, and created a WebGUI based version: link:https://www.nf2t.net/[].
+
 == How to Install
 
-This program is available in the Maven Central Repository: https://central.sonatype.com/artifact/com.yelloowstone.nf2t/nf2t-cli
+This program is available in the Maven Central Repository: link:https://central.sonatype.com/artifact/com.yelloowstone.nf2t/nf2t-cli[]
 
 == How To Run
 
 [source,console]
----
+----
 $ java -jar target/nf2t-cli-0.0.2.jar
 org.apache.commons.cli.MissingOptionException: Missing required options: v, a, i, ousage: CommandLineParameters
  -a,--action <arg>    The action <package,unpackage>.
@@ -24,9 +30,14 @@ org.apache.commons.cli.MissingOptionException: Missing required options: v, a, i
                       directory where the "flowFiles.pkg" will be created
                       or the name of the file.
  -v,--version <arg>   The Apache FlowFile version <1,2,3>.
----
+----
 
 == How to Build
 
-Run the ./update.sh script to update the versions of the project.
-Run the ./build.sh to build the project and get the maven.zip file to upload to maven central repository.
+Run the link:./update.sh[] script to update the versions of the project.
+Run the link:./build.sh[] to build the project and get the maven.zip file to upload to Maven Central Repository.
+
+== TODO
+
+* Review the standard implementation, make sure this implementation is as similiar as possible: link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[].
+* Always say unpackage before package reflecting its primacy.

@@ -35,10 +35,11 @@ import org.apache.nifi.util.FlowFileUnpackagerV3;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import com.fasterxml.jackson.module.jsonSchema.factories.SchemaFactoryWrapper;
 
 public class App {
-	public static final String PACKAGE_EXTENSION = ".pkg";
-	public static final String FLOWFILE_DEFAULT_FILENAME = "flowFiles" + PACKAGE_EXTENSION;
+
 	public static final String FILE_SIZE_ATTRIBUTE = "size";
 	
 	private final PrintStream stderr;
@@ -64,18 +65,12 @@ public class App {
 
 		final List<String> actions = List.of(Action.values()).stream().map(x -> x.toString().toLowerCase()).sorted()
 				.collect(Collectors.toList());
-		final List<String> versions = this.unpackagers.keySet().stream().map(x -> x.toString()).sorted()
-				.collect(Collectors.toList());
 
 		options.addOption("h", "help", false, "Shows help information.");
-		options.addRequiredOption("v", "version", true,
-				"The Apache FlowFile version <" + String.join(",", versions) + ">.");
+		options.addRequiredOption("v", "version", true, FlowFileStreamResult.VERSION_DESCRIPTION);
 		options.addRequiredOption("a", "action", true, "The action <" + String.join(",", actions) + ">.");
-		options.addRequiredOption("i", "in", true,
-				"The input path. For unpackage, a directory or file containing a FlowFileStream. For package, a directory or file containing FlowFile content.");
-		options.addRequiredOption("o", "out", true,
-				"The output path. For unpackage, a directory containing the FlowFile content. For package, a directory where the \""
-						+ FLOWFILE_DEFAULT_FILENAME + "\" will be created or the name of the file.");
+		options.addRequiredOption("i", "in", true, FlowFileStreamResult.INPUTPATH_DESCRIPTION);
+		options.addRequiredOption("o", "out", true, FlowFileStreamResult.OUTPUTPATH_DESCRIPTION);
 	}
 
 	public void packageFiles(final FlowFileStreamResult result) {
@@ -83,7 +78,7 @@ public class App {
 		Path outputPath = result.getOutputPath();
 
 		if (Files.isDirectory(outputPath)) {
-			outputPath = outputPath.resolve(FLOWFILE_DEFAULT_FILENAME);
+			outputPath = outputPath.resolve(FlowFileStreamResult.FLOWFILE_DEFAULT_FILENAME);
 			result.setOutputPath(outputPath);
 		}
 
@@ -191,6 +186,13 @@ public class App {
 		}
 	}
 
+	public void generateSchema() throws JsonProcessingException {
+		SchemaFactoryWrapper visitor = new SchemaFactoryWrapper();
+		mapper.acceptJsonFormatVisitor(FlowFileStreamResult.class, visitor);
+		JsonSchema personSchema = visitor.finalSchema();
+		this.stdout.print(this.mapper.writer().writeValueAsString(personSchema));
+	}
+	
 	public FlowFileStreamResult parse(final CommandLineParser parser, final String[] args) {
 		try {
 			final CommandLine commandLine = parser.parse(this.options, args);
@@ -218,8 +220,13 @@ public class App {
 			} else if (Action.UNPACKAGE == action) {
 				unpackageFiles(result);
 			}
+			
+			if(Action.SCHEMA == action) {
+				generateSchema();
+			} else {
+				this.stdout.print(this.mapper.writer().writeValueAsString(result));
+			}
 
-			this.stdout.print(this.mapper.writer().writeValueAsString(result));
 			return result;
 
 		} catch (ParseException | JsonProcessingException e) {
