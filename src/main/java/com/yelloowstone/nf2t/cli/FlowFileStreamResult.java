@@ -15,7 +15,7 @@ public class FlowFileStreamResult {
 	@JsonProperty("version")
 	final private int version;
 
-	protected static final String INPUTPATH_UNPACKAGE_DESCRIPTION = " For the unpackage command, a single FlowFileStream file, a directory of FlowFileStream files, a directory containing .ZIP or .TAR.GZ files containing FlowFileStream(s), or a single .ZIP or .TAR.GZ file containing FlowFileStream(s)";
+	protected static final String INPUTPATH_UNPACKAGE_DESCRIPTION = " For the unpackage command, a single FlowFileStream file, a directory of FlowFileStream files, a directory containing .ZIP or .TAR.GZ files containing FlowFileStream(s), or a single .ZIP or .TAR.GZ file containing FlowFileStream(s).";
 	protected static final String INPUTPATH_PACKAGE_DESCRIPTION = " For the package command, a directory or file containing FlowFile content.";	
 	@JsonPropertyDescription("The input path. " + INPUTPATH_UNPACKAGE_DESCRIPTION + INPUTPATH_PACKAGE_DESCRIPTION + "Represented by Java URI format.")
 	@JsonProperty("inputPath")
