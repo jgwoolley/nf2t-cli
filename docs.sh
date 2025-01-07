@@ -18,6 +18,10 @@ mkdir --parents ./dist/
 rm -rf ./dist/
 
 cp -a ./public/ ./dist/
+cp ./build.sh ./dist/
+cp ./docs.sh ./dist/
+cp ./download_jar.sh ./dist/
+
 mkdir --parents ./dist/javadocs/
 mkdir --parents ./dist/man/
 

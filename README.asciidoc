@@ -1,51 +1,54 @@
 = nf2t-cli
 :url-repo: https://github.com/jgwoolley/nf2t-cli
 :description: A Java CLI for parsing Apache NiFi FlowFiles.
-:favicon: /favicon.svg
+:favicon: ./favicon.svg
 
 == Description
 
 A Java CLI for parsing Apache NiFi FlowFiles.
 
 ifdef::env-github[]
-* Usage Guide: link:https://jgwoolley.github.io/nf2t-cli/man/[]
+* link:https://jgwoolley.github.io/nf2t-cli/man/[Usage Guide].
 endif::[]
 ifndef::env-github[]
-* Usage Guide: link:./man/index.html[]
+* link:./man/index.html[Usage Guide].
 endif::[]
-* Source Code: link:https://github.com/jgwoolley/nf2t-cli[].
-* Documentation: link:https://jgwoolley.github.io/nf2t-cli/[].
+* link:https://github.com/jgwoolley/nf2t-cli[Source Code].
+* link:https://jgwoolley.github.io/nf2t-cli/[Documentation].
 ifdef::env-github[]
-* Javadocs: link:https://jgwoolley.github.io/nf2t-cli/javadocs/[]
+* link:https://jgwoolley.github.io/nf2t-cli/javadocs/[Javadocs].
 endif::[]
 ifndef::env-github[]
-* Javadocs: link:./javadocs/index.html[]
+* link:./javadocs/index.html[Javadocs].
 endif::[]
 ifndef::env-github[]
-* Maven Central Repository: link:https://central.sonatype.com/artifact/com.yelloowstone.nf2t/nf2t-cli[]
-* Artifacts to Publish to Maven Central (Currently Lack GPG Signing): link:./maven.zip[]
+* link:https://central.sonatype.com/artifact/com.yelloowstone.nf2t/nf2t-cli[Maven Central Repository].
+* link:./maven.zip[Artifacts to Publish to Maven Central (Currently Lack GPG Signing)].
 endif::[]
 
 == Background
 
-While the Apache Foundation has its own Unpackager (link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[nifi-flowfile-packager]). It lacks a packager, and dumps all attributes into their own text files which is a little messy for large projects.
+While the Apache Foundation has its own Unpackager (link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[nifi-flowfile-packager]). It lacks a packager, and dumps all attributes into their own text files which is a little messy for large projects. This CLI dumps all FlowFile Attributes to the STDOUT (Standard Output), and thus can easily be redirected to a file.
 
 I've developed several versions of this project over the years, and created a WebGUI based version: link:https://www.nf2t.net/[].
 
+== Technologies Used
+* link:https://picocli.info/[Picocli]: Picocli is a one-file framework for creating Java command line applications with almost zero code.
+* link:https://asciidoctor.org/[Asciidoctor]: A fast text processor & publishing toolchain for converting AsciiDoc to HTML5, DocBook & more.
+
 == How to Build
 
-* Run the link:./update.sh[] script to update the versions of the project.
-* Run the link:./build.sh[] to build the project and get the maven.zip file to upload to Maven Central Repository.
+* Run the link:./update.sh[update.sh] script to update the versions of the project.
+* Run the link:./build.sh[build.sh] to build the project and get the maven.zip file to upload to Maven Central Repository.
 
 == Example Scripts
-* link:./download_jar.sh[Download the JAR from MAVEN]
+* link:./download_jar.sh[download_jar.sh]: Download the JAR from MAVEN
 
 == TODO
 
+* Get Favicons into manpages.
+* Add link:https://picocli.info/man/picocli.AutoComplete.html[AutoComplete]
 * link:https://docs.asciidoctor.org/asciidoc/latest/docinfo/#head[]
-* Add GitHub Specific sauce
-* Remove progress bars from maven.
-* See link:https://github.com/remkop/picocli/tree/main/picocli-codegen#generate-documentation[]
 * FileSystem or InputStreams to parse?
 * Review the standard implementation, make sure this implementation is as similiar as possible: link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[].
 * Always say unpackage before package reflecting its primacy.

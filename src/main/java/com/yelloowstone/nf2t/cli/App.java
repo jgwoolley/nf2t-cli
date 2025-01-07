@@ -38,7 +38,7 @@ import picocli.codegen.docgen.manpage.ManPageGenerator;
 /**
  * @author 26191568+jgwoolley@users.noreply.github.com
  */
-@Command(name = "nf2t", subcommands = ManPageGenerator.class, mixinStandardHelpOptions = true, description = "A Java CLI for parsing Apache NiFi FlowFiles.")
+@Command(name = "nf2t", subcommands = ManPageGenerator.class, mixinStandardHelpOptions = true, description = "A Java CLI for parsing Apache NiFi FlowFileStreams. One or more FlowFiles can be serialized into a FlowFileStream, in one of three formats.")
 public class App implements Callable<Integer> {
 	public static final String FILE_SIZE_ATTRIBUTE = "size";
 
@@ -186,10 +186,10 @@ public class App implements Callable<Integer> {
 	}
 	
 	
-	@Command(name = "unpackage")
+	@Command(name = "unpackage", description="Unpackages FlowFileStream(s), information regarding this operation sent to standard out. See command arguments for furher details.")
 	public Integer unpackageFlowFileStream(
 			@Option(names = { "-v", "--version" }, defaultValue = "3", description = {
-					FlowFileStreamResult.VERSION_DESCRIPTION + " incoming FlowFile." }) final int version,
+					FlowFileStreamResult.VERSION_DESCRIPTION + " incoming FlowFileStream(s)." }) final int version,
 			@Option(names = { "-i", "--in" }, description = "The input path."
 					+ FlowFileStreamResult.INPUTPATH_UNPACKAGE_DESCRIPTION, required = true) final String inputOption,
 			@Option(names = { "-o", "--out" }, description = "The output path."
@@ -241,7 +241,7 @@ public class App implements Callable<Integer> {
 		return 0;
 	}
 	
-	@Command(name = "package")
+	@Command(name = "package", description="Packages FlowFileStream(s), information regarding this operation sent to standard out. See command arguments for furher details.")
 	public Integer packageFlowFileStream(
 			@Option(names = { "-v", "--version" }, defaultValue = "3", description = {
 					FlowFileStreamResult.VERSION_DESCRIPTION + " resulting FlowFile." }) final int version,
@@ -324,7 +324,7 @@ public class App implements Callable<Integer> {
 		return 0;
 	}
 
-	@Command(name = "generateSchema")
+	@Command(name = "generateSchema", description="Generates a JSONSchema for the result of the Unpackage/Package commands.")
 	public Integer generateSchema() throws JsonProcessingException {
 		SchemaFactoryWrapper visitor = new SchemaFactoryWrapper();
 		mapper.acceptJsonFormatVisitor(FlowFileStreamResult.class, visitor);

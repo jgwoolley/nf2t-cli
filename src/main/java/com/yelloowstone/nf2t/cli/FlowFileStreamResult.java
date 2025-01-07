@@ -10,19 +10,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public class FlowFileStreamResult {
 
-	public static final String VERSION_DESCRIPTION = "This is the FlowFile version of the ";
+	protected static final String VERSION_DESCRIPTION = "This is the FlowFile version of the ";
 	@JsonPropertyDescription(VERSION_DESCRIPTION + "file.")
 	@JsonProperty("version")
 	final private int version;
 
-	public static final String INPUTPATH_UNPACKAGE_DESCRIPTION = " For unpackage, a directory or file containing a FlowFileStream.";
-	public static final String INPUTPATH_PACKAGE_DESCRIPTION = " For package, a directory or file containing FlowFile content.";	
+	protected static final String INPUTPATH_UNPACKAGE_DESCRIPTION = " For the unpackage command, a single FlowFileStream file, a directory of FlowFileStream files, a directory containing .ZIP or .TAR.GZ files containing FlowFileStream(s), or a single .ZIP or .TAR.GZ file containing FlowFileStream(s)";
+	protected static final String INPUTPATH_PACKAGE_DESCRIPTION = " For the package command, a directory or file containing FlowFile content.";	
 	@JsonPropertyDescription("The input path. " + INPUTPATH_UNPACKAGE_DESCRIPTION + INPUTPATH_PACKAGE_DESCRIPTION + "Represented by Java URI format.")
 	@JsonProperty("inputPath")
 	final private Path inputPath;
 
-	public static final String OUTPUTPATH_UNPACKAGE_DESCRIPTION = " For unpackage, a directory containing the FlowFile content.";
-	public static final String OUTPUTPATH_PACKAGE_DESCRIPTION = " For package, a directory where the FlowFile will be created or the full path to the FlowFile.";
+	protected static final String OUTPUTPATH_UNPACKAGE_DESCRIPTION = " For the unpackage command, a directory containing the FlowFile content.";
+	protected static final String OUTPUTPATH_PACKAGE_DESCRIPTION = " For the package command, a directory where a FlowFileStream will be created containing all the incoming content with a default filename, or the full path to the FlowFileStream.";
 	
 	@JsonPropertyDescription("The output path. " + OUTPUTPATH_UNPACKAGE_DESCRIPTION + OUTPUTPATH_PACKAGE_DESCRIPTION + "Represented by Java URI format.")
 	@JsonProperty("outputPath")

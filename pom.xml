@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.yelloowstone.nf2t</groupId>
 	<artifactId>nf2t-cli</artifactId>
-	<version>0.0.5-SNAPSHOT</version>
+	<version>0.0.5</version>
 
 	<name>nf2t-cli</name>
 	<description>A Java CLI for parsing Apache NiFi FlowFiles.</description>
