@@ -20,7 +20,6 @@ rm -rf ./dist/
 cp -a ./public/ ./dist/
 mkdir --parents ./dist/javadocs/
 mkdir --parents ./dist/man/
-mkdir --parents ./dist/readme/
 
 # Create Variables
 
@@ -32,4 +31,4 @@ unzip "./target/${prefix_name}-javadoc.jar" -d ./dist/javadocs
 java -jar "./target/${prefix_name}.jar" gen-manpage -d ./dist/man/
 
 asciidoctor --source-dir "./dist/man" "./dist/man/*.adoc"
-asciidoctor README.asciidoc --out-file "./dist/readme/index.html"
+asciidoctor README.asciidoc --out-file "./dist/index.html"

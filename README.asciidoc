@@ -1,47 +1,36 @@
 = nf2t-cli
+:url-repo: https://github.com/jgwoolley/nf2t-cli
+:description: A Java CLI for parsing Apache NiFi FlowFiles.
+:favicon: /favicon.svg
 
 == Description
 
 A Java CLI for parsing Apache NiFi FlowFiles.
+
+ifdef::env-github[]
+* Usage Guide: link:https://jgwoolley.github.io/nf2t-cli/man/[]
+endif::[]
+ifndef::env-github[]
+* Usage Guide: link:./man/index.html[]
+endif::[]
+* Source Code: link:https://github.com/jgwoolley/nf2t-cli[].
+* Documentation: link:https://jgwoolley.github.io/nf2t-cli/[].
+ifdef::env-github[]
+* Javadocs: link:https://jgwoolley.github.io/nf2t-cli/javadocs/[]
+endif::[]
+ifndef::env-github[]
+* Javadocs: link:./javadocs/index.html[]
+endif::[]
+ifndef::env-github[]
+* Maven Central Repository: link:https://central.sonatype.com/artifact/com.yelloowstone.nf2t/nf2t-cli[]
+* Artifacts to Publish to Maven Central (Currently Lack GPG Signing): link:./maven.zip[]
+endif::[]
 
 == Background
 
 While the Apache Foundation has its own Unpackager (link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[nifi-flowfile-packager]). It lacks a packager, and dumps all attributes into their own text files which is a little messy for large projects.
 
 I've developed several versions of this project over the years, and created a WebGUI based version: link:https://www.nf2t.net/[].
-
-== How to Install
-
-This program is available in the Maven Central Repository: link:https://central.sonatype.com/artifact/com.yelloowstone.nf2t/nf2t-cli[]
-
-== How To Run
-
-[source,console]
-----
-$ java -jar target/nf2t-cli-0.0.4.jar --help
-Usage: nf2t [-hV] [COMMAND]
-A Java CLI for parsing Apache NiFi FlowFiles.
-  -h, --help      Show this help message and exit.
-  -V, --version   Print version information and exit.
-Commands:
-  generateSchema
-  package
-  unpackage
-----
-
-[source,console]
-----
-$ java -jar ./target/nf2t-cli-0.0.3.jar package
-Missing required options: '--in=<arg1>', '--out=<arg2>'
-Usage: nf2t package -i=<arg1> -o=<arg2> [-v=<arg0>]
-  -i, --in=<arg1>        The input path. For package, a directory or file
-                           containing FlowFile content.
-  -o, --out=<arg2>       The output path.For package, a directory where the
-                           flowFiles.pkg will be created or the name of the
-                           file.
-  -v, --version=<arg0>   This is the FlowFile version of the file this packaged
-                           or unpackaged.
-----
 
 == How to Build
 
