@@ -12,11 +12,15 @@ mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp
 groupId=$(cat groupId.mvnhelp)
 artifactId=$(cat artifactId.mvnhelp)
 version=$(cat version.mvnhelp)
+
+rm *.mvnhelp
+
+# Create Variables
+
 artifact_path="${groupId//./\/}/${artifactId//./\/}/${version}/"
 prefix_name="${artifactId}-${version}"
 prefix_path="${artifact_path}/${prefix_name}"
 
-rm *.mvnhelp
 
 # Run Maven
 
@@ -53,7 +57,7 @@ for file in "$artifact_path"/*; do
 	sha512sum $file | cut -d ' ' -f 1 > "$file.sha512"
 done
 
-rm -f ./maven.zip
-zip -r ./maven.zip "$artifact_path"
+rm -f "./maven.zip"
+zip -r "./maven.zip" "$artifact_path"
 
-echo "${groupId}.${artifactId}.${version}/"
+echo "./${groupId}.${artifactId}.${version}.zip"
