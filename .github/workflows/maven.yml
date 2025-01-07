@@ -57,7 +57,7 @@ jobs:
       uses: actions/upload-pages-artifact@v1
       with:
         # Upload public repository
-        path: './public'
+        path: './dist'
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v1
