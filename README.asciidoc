@@ -53,6 +53,8 @@ Usage: nf2t package -i=<arg1> -o=<arg2> [-v=<arg0>]
 
 == TODO
 
+* Add GitHub Specific sauce
+* Remove progress bars from maven.
 * See link:https://github.com/remkop/picocli/tree/main/picocli-codegen#generate-documentation[]
 * FileSystem or InputStreams to parse?
 * Review the standard implementation, make sure this implementation is as similiar as possible: link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[].

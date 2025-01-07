@@ -3,7 +3,7 @@
 .project
 .settings/
 dependency-reduced-pom.xml
-/target/
+target/
 maven.zip
-/com
-public
+com/
+dist/

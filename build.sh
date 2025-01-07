@@ -51,11 +51,13 @@ cp "./target/${prefix_name}.jar" "$artifact_path"
 for file in "$artifact_path"/*; do
 	echo "$file"
 
+	md5sum $file | cut -d ' ' -f 1 > "$file.md5"
+	sha1sum $file | cut -d ' ' -f 1 > "$file.sha1"
+	sha256sum $file | cut -d ' ' -f 1 > "$file.sha256"
+	sha512sum $file | cut -d ' ' -f 1 > "$file.sha512"
+
 	if gpg --yes --local-user $GPG_USER -ab $file; then
-		md5sum $file | cut -d ' ' -f 1 > "$file.md5"
-		sha1sum $file | cut -d ' ' -f 1 > "$file.sha1"
-		sha256sum $file | cut -d ' ' -f 1 > "$file.sha256"
-		sha512sum $file | cut -d ' ' -f 1 > "$file.sha512"
+
 	fi
 done
 

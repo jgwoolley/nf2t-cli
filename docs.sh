@@ -14,22 +14,22 @@ rm *.mvnhelp
 
 # Create JavaDocs
 
-mkdir --parents ./public/
-rm -rf ./public/*
+mkdir --parents ./dist/
+rm -rf ./dist/
 
-mkdir ./public/javadocs/
-mkdir ./public/man/
+cp -a ./public/ ./dist/
+mkdir --parents ./dist/javadocs/
+mkdir --parents ./dist/man/
+mkdir --parents ./dist/readme/
 
 # Create Variables
 
 prefix_name="${artifactId}-${version}"
 
-cp pages.html public/index.html
-cp maven.zip public/
-unzip "./target/${prefix_name}-javadoc.jar" -d public/javadocs
+cp maven.zip ./dist/
+unzip "./target/${prefix_name}-javadoc.jar" -d ./dist/javadocs
 
-java -jar "./target/${prefix_name}.jar" gen-manpage -d public/man/
+java -jar "./target/${prefix_name}.jar" gen-manpage -d ./dist/man/
 
-asciidoctor --source-dir "public/man" "public/man/*.adoc"
-
-echo '<html><head><meta http-equiv="refresh" content="0; url=nf2t.html" /></head><body><p><a href="nf2t.html">Redirect</a></p></body></html>' >> "public/man/index.html"
+asciidoctor --source-dir "./dist/man" "./dist/man/*.adoc"
+asciidoctor README.asciidoc --out-file "./dist/readme/index.html"
