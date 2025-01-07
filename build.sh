@@ -24,7 +24,7 @@ prefix_path="${artifact_path}/${prefix_name}"
 
 # Run Maven
 
-mvn clean install
+mvn clean install --no-transfer-progress
 
 # Create Maven Central ZIP Folder Structure
 
@@ -57,7 +57,7 @@ for file in "$artifact_path"/*; do
 	sha512sum $file | cut -d ' ' -f 1 > "$file.sha512"
 
 	if gpg --yes --local-user $GPG_USER -ab $file; then
-
+	 	echo "Success"
 	fi
 done
 
