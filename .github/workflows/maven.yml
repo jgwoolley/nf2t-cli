@@ -48,7 +48,7 @@ jobs:
     - name: Build Project
       run: bash build.sh
     - name: Install Asciidoc
-      run: apt-get install -y asciidoctor 
+      run: sudo apt-get install -y asciidoctor 
     - name: Build Docs
       run: bash docs.sh     
     - name: Setup Pages
