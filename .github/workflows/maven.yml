@@ -51,10 +51,13 @@ jobs:
       run: bash docs.sh
     - name: Setup Pages
       uses: actions/configure-pages@v3
+
+    - name: Install Asciidoc
+      run: apt-get install -y asciidoctor
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v1
       with:
-        # Upload dist repository
+        # Upload public repository
         path: './public'
     - name: Deploy to GitHub Pages
       id: deployment

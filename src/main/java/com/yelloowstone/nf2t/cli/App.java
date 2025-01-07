@@ -33,11 +33,12 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
+import picocli.codegen.docgen.manpage.ManPageGenerator;
 
 /**
  * @author 26191568+jgwoolley@users.noreply.github.com
  */
-@Command(name = "nf2t", mixinStandardHelpOptions = true, description = "A Java CLI for parsing Apache NiFi FlowFiles.")
+@Command(name = "nf2t", subcommands = ManPageGenerator.class, mixinStandardHelpOptions = true, description = "A Java CLI for parsing Apache NiFi FlowFiles.")
 public class App implements Callable<Integer> {
 	public static final String FILE_SIZE_ATTRIBUTE = "size";
 
@@ -239,7 +240,7 @@ public class App implements Callable<Integer> {
 
 		return 0;
 	}
-
+	
 	@Command(name = "package")
 	public Integer packageFlowFileStream(
 			@Option(names = { "-v", "--version" }, defaultValue = "3", description = {
@@ -334,8 +335,7 @@ public class App implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws Exception {
-		spec.commandLine().getOut().println("Subcommand needed: 'unpackage', 'package' or 'generateSchema'");
-		return 1;
+        throw new picocli.CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand.");
 	}
 
 	public FlowFilePackageVersions getPackageVersions() {

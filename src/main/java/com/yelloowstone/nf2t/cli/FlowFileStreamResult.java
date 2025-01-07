@@ -21,8 +21,8 @@ public class FlowFileStreamResult {
 	@JsonProperty("inputPath")
 	final private Path inputPath;
 
-	public static final String OUTPUTPATH_UNPACKAGE_DESCRIPTION = "For unpackage, a directory containing the FlowFile content.";
-	public static final String OUTPUTPATH_PACKAGE_DESCRIPTION = "For package, a directory where the FlowFile will be created or the full path to the FlowFile.";
+	public static final String OUTPUTPATH_UNPACKAGE_DESCRIPTION = " For unpackage, a directory containing the FlowFile content.";
+	public static final String OUTPUTPATH_PACKAGE_DESCRIPTION = " For package, a directory where the FlowFile will be created or the full path to the FlowFile.";
 	
 	@JsonPropertyDescription("The output path. " + OUTPUTPATH_UNPACKAGE_DESCRIPTION + OUTPUTPATH_PACKAGE_DESCRIPTION + "Represented by Java URI format.")
 	@JsonProperty("outputPath")
