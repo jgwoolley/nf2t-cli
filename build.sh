@@ -62,4 +62,4 @@ done
 rm -f "./maven.zip"
 zip -r "./maven.zip" "$artifact_path"
 
-echo "./${groupId}.${artifactId}.${version}.zip"
+echo "${groupId}.${artifactId}.${version}"
