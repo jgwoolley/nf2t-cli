@@ -45,10 +45,14 @@ Usage: nf2t package -i=<arg1> -o=<arg2> [-v=<arg0>]
 
 == How to Build
 
-Run the link:./update.sh[] script to update the versions of the project.
-Run the link:./build.sh[] to build the project and get the maven.zip file to upload to Maven Central Repository.
+* Run the link:./update.sh[] script to update the versions of the project.
+* Run the link:./build.sh[] to build the project and get the maven.zip file to upload to Maven Central Repository.
+
+== Example Scripts
+* link:./download_jar.sh[Download the JAR from MAVEN]
 
 == TODO
 
+* FileSystem or InputStreams to parse?
 * Review the standard implementation, make sure this implementation is as similiar as possible: link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[].
 * Always say unpackage before package reflecting its primacy.

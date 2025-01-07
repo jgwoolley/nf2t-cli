@@ -1,5 +1,6 @@
 package com.yelloowstone.nf2t.cli;
 
+import java.nio.file.Path;
 import java.util.function.Supplier;
 
 import org.apache.nifi.util.FlowFilePackager;
@@ -33,5 +34,10 @@ public class FlowFilePackageVersion {
 
 	public FlowFilePackager getPackager() {
 		return packager.get();
+	}
+	
+	public Path getDefaultName(Path parent) {
+		return parent.resolve("data" + fileExtension);
+		
 	}
 }

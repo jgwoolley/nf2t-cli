@@ -1,6 +1,6 @@
 package com.yelloowstone.nf2t.cli;
 
-import java.nio.file.Path;
+import java.net.URI;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,17 +11,17 @@ public class FlowFileErrorResult {
 	@JsonProperty("exception")
 	private final String exception;
 	
-	@JsonPropertyDescription("The path of the file that threw an error.")
+	@JsonPropertyDescription("The path of the file that threw an error, represented by Java URI format.")
 	@JsonProperty("path")
-	private final Path path;
+	private final URI path;
 	
-	public FlowFileErrorResult(final Exception exception, @JsonProperty("path") final Path path) {
+	public FlowFileErrorResult(final Exception exception, @JsonProperty("path") final URI path) {
 		this(exception.getMessage(), path);
 
 	}
 	
 	@JsonCreator
-	public FlowFileErrorResult(@JsonProperty("exception") final String exception, @JsonProperty("path") final Path path) {
+	public FlowFileErrorResult(@JsonProperty("exception") final String exception, @JsonProperty("path") final URI path) {
 		this.exception = exception;
 		this.path = path;
 	}
@@ -30,7 +30,7 @@ public class FlowFileErrorResult {
 		return exception;
 	}
 	
-	public Path getPath() {
+	public URI getPath() {
 		return path;
 	}
 	

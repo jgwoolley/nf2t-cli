@@ -1,17 +1,11 @@
 package com.yelloowstone.nf2t.cli;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -23,151 +17,107 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
-import picocli.CommandLine;
-
 public class AppTest {
 	private static final int[] versions = new int[] { 3, 2, 1 };
-	private static final String[] examples = new String[] { "1.txt", "2.txt", "3.txt" };
 	
-	public static void delete(Path path) throws IOException {
-		Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				Files.delete(file);
-				return FileVisitResult.CONTINUE;
-			}
-
-			@Override
-			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-				if (exc == null) {
-					Files.delete(dir);
-					return FileVisitResult.CONTINUE;
-				} else {
-					throw exc;
-				}
-			}
-		});
-	}
-
 	@Test
 	public void testPackageFiles() throws Exception {
-		int successes = 0;
-		final Path tmpPath = Files.createTempDirectory("testPackageFile");
 
 		final ObjectMapper mapper = new ObjectMapper();
 		final ObjectReader reader = mapper.reader();
 
-		try {
-			for (int version : versions) {
-				System.out.println("Package V" + version);
+	
+		for (int version : versions) {
+			System.out.println("Package V" + version);
 
-				final Path versionPath = tmpPath.resolve(Integer.toString(version));
-
-				Files.createDirectory(versionPath);
-
-				final Path contentPath = versionPath.resolve("content");
-				final Path packagedPath = versionPath.resolve("packaged");
-				final Path unpackagedPath = versionPath.resolve("unpackaged");
-
-				Files.createDirectories(versionPath);
-				Files.createDirectories(contentPath);
-				Files.createDirectories(packagedPath);
-				Files.createDirectories(unpackagedPath);
-
-				for (String example : examples) {
-					Files.writeString(contentPath.resolve(example), "Hello World!");
+			try(final MockEnvironment environment = new MockEnvironment(version)) {
+				int actualResults = 0;
+				environment.createExampleContent("1.txt", "Hello World!");
+				if(version != 1) {
+					environment.createExampleContent("2.txt", "");
+					environment.createExampleContent("3", new byte[] {});
 				}
+				
+				final Path contentPath = environment.getContentPath();
+				final Path packagedPath = environment.getPackagedPath();
+				
+				final String sw = environment.execute(x -> new String[] {"package", "--version", Integer.toString(version), "--in", contentPath.toString(), "--out", packagedPath.toString()});
+				
+				final FlowFileStreamResult result = reader.readValue(sw, FlowFileStreamResult.class);
 
-				final App app = new App();
-				StringWriter sw = new StringWriter();
-				CommandLine cmd = new CommandLine(app);
-				cmd.setOut(new PrintWriter(sw));
-
-				cmd.execute("package", "--version", Integer.toString(version), "--in", contentPath.toString(), "--out", packagedPath.toString());
-
-				final FlowFileStreamResult result = reader.readValue(sw.toString(), FlowFileStreamResult.class);
-
-				final FlowFileUnpackager unpackager = app.getPackageVersions().get(version).getUnpackager();
+				final FlowFileUnpackager unpackager = environment.getPackageVersions().get(version).getUnpackager();
 
 				try (InputStream in = Files.newInputStream(result.getOutputPath())) {
-					while (true) {
+					while (unpackager.hasMoreData()) {
 						Map<String, String> attributes = unpackager.unpackageFlowFile(in,
 								OutputStream.nullOutputStream());
-						System.out.println("\t" + attributes);
+						System.out.println("\t" + mapper.writer().writeValueAsString(attributes));
+						
 						if (attributes == null) {
 							break;
 						} else {
-							successes += 1;
+							actualResults += 1;
 						}
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-
-				cmd.execute("unpackage", "--version", Integer.toString(version),
-						"--in", packagedPath.toString(), "--out", unpackagedPath.toString());
-
+				
+				Assert.assertEquals(environment.getExpectedResults(), actualResults);
+				System.out.println("\t" + mapper.writer().writeValueAsString(environment.getFilePaths()));
 			}
-		} finally {
-			delete(tmpPath);
-		}
 
-		int expected = 0;
-		for (int version : versions) {
-			expected += version == 1 ? 1 : examples.length;
 		}
-
-		Assert.assertEquals(expected, successes);
 	}
 
 	@Test
 	public void testUnpackageFiles() throws Exception {
-		int successes = 0;
-		final int[] versions = new int[] { 3, 2, 1 };
-		final String[] examples = new String[] { "1.txt"};
 
-		final Path tmpPath = Files.createTempDirectory("testUnpackageFile");
+		final int[] versions = new int[] { 3, 2, 1 };
 
 		final ObjectMapper mapper = new ObjectMapper();
 		final ObjectReader reader = mapper.reader();
 
-		try {
-			for (int version : versions) {
-				System.out.println("Unpackage V" + version);
-
-				final Path versionPath = tmpPath.resolve(Integer.toString(version));
-
-				Files.createDirectory(versionPath);
-
-				final Path contentPath = versionPath.resolve("content");
-				final Path packagedPath = versionPath.resolve("packaged");
-				final Path unpackagedPath = versionPath.resolve("unpackaged");
-
-				Files.createDirectories(versionPath);
-				Files.createDirectories(contentPath);
-				Files.createDirectories(packagedPath);
-				Files.createDirectories(unpackagedPath);
-				
-				final App app = new App();
-				final StringWriter sw = new StringWriter();
-				final CommandLine cmd = new CommandLine(app);
-				cmd.setOut(new PrintWriter(sw));
-				
-				final FlowFilePackager packager = app.getPackageVersions().get(version).getPackager();
-
-				for (String example : examples) {
-					Path examplePath = contentPath.resolve(example);
-					byte[] content = "Hello World!".getBytes(StandardCharsets.UTF_8);
-					Files.write(examplePath, content);
+		for (int version : versions) {
+			System.out.println("Unpackage V" + version);
+			
+			try(final MockEnvironment environment = new MockEnvironment(version)) {
+				environment.createExampleContent("1.txt", "Hello World!");
+				if(version != 1) {
+					environment.createExampleContent("2.txt", "");
+					environment.createExampleContent("3", new byte[] {});
+					environment.createExampleZip();
 				}
-
-				final Path flowFileStreamPath = packagedPath.resolve(FlowFileStreamResult.FLOWFILE_DEFAULT_FILENAME);
 				
-				try (OutputStream out = Files.newOutputStream(flowFileStreamPath)) {					
-					for(Path path: Files.list(contentPath).collect(Collectors.toList())) {
+				final Path contentPath = environment.getContentPath();
+				final Path packagedPath = environment.getPackagedPath();
+				final Path unpackagedPath = environment.getUnpackagedPath();
+								
+				final FlowFilePackageVersion packageVersion = environment.getPackageVersions().get(version);
+				
+				final FlowFilePackager packager = packageVersion.getPackager();
+
+				final Path flowFileStreamPath = packageVersion.getDefaultName(packagedPath);
+				
+				
+				if(Files.exists(flowFileStreamPath)) {
+					Assert.assertTrue("File already exists: " + flowFileStreamPath, false);
+				}
+				
+				try (OutputStream out = Files.newOutputStream(flowFileStreamPath)) {								
+					Files.list(contentPath).map(x -> Map.entry(null, null));
+					
+					List<Path> paths = Files.list(contentPath).collect(Collectors.toList());
+					System.out.println("\t" + mapper.writer().writeValueAsString(paths));
+
+					if(version == 1 && paths.size() != 1) {
+						throw new Exception("Version 1 only supports 1 result: Got " + paths.size());
+					}
+					
+					for(Path path: paths) {
 						final Map<String, String> attributes = new HashMap<>();
 						long size = App.updateDefaultAttributes(attributes, path);
-						System.out.println("\t" + attributes);
+						System.out.println("\t" + mapper.writer().writeValueAsString(attributes));
 						try (InputStream in = Files.newInputStream(path)) {
 							packager.packageFlowFile(in, out, attributes, size);
 						} catch(Exception e) {
@@ -176,25 +126,16 @@ public class AppTest {
 					}
 				}
 
-				cmd.execute("unpackage", "--version", Integer.toString(version),
-						"--in", packagedPath.toString(), "--out", unpackagedPath.toString());
+				final String sw = environment.execute(x -> new String[] {"unpackage", "--version", Integer.toString(version),
+						"--in", packagedPath.toString(), "--out", unpackagedPath.toString()});
 
 				System.out.println("\t" + sw.toString());
 				final FlowFileStreamResult result = reader.readValue(sw.toString(), FlowFileStreamResult.class);
 
-				successes += result.getOutputFiles().size();
-			}
-			
-			int expected = 0;
-			for (int version : versions) {
-				expected += version == 1 ? 1 : examples.length;
-			}
-
-			Assert.assertEquals(expected, successes);
-		} finally {
-			delete(tmpPath);
+				Assert.assertEquals(environment.getExpectedResults(), result.getOutputFiles().size());
+				
+				System.out.println("\t" + mapper.writer().writeValueAsString(environment.getFilePaths()));
+			}			
 		}
-
-
 	}
 }

@@ -9,8 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public class FlowFileStreamResult {
-	public static final String PACKAGE_EXTENSION = ".pkg";
-	public static final String FLOWFILE_DEFAULT_FILENAME = "flowFiles" + PACKAGE_EXTENSION;
 
 	public static final String VERSION_DESCRIPTION = "This is the FlowFile version of the ";
 	@JsonPropertyDescription(VERSION_DESCRIPTION + "file.")
@@ -19,14 +17,14 @@ public class FlowFileStreamResult {
 
 	public static final String INPUTPATH_UNPACKAGE_DESCRIPTION = " For unpackage, a directory or file containing a FlowFileStream.";
 	public static final String INPUTPATH_PACKAGE_DESCRIPTION = " For package, a directory or file containing FlowFile content.";	
-	@JsonPropertyDescription("The input path. " + INPUTPATH_UNPACKAGE_DESCRIPTION + INPUTPATH_PACKAGE_DESCRIPTION)
+	@JsonPropertyDescription("The input path. " + INPUTPATH_UNPACKAGE_DESCRIPTION + INPUTPATH_PACKAGE_DESCRIPTION + "Represented by Java URI format.")
 	@JsonProperty("inputPath")
 	final private Path inputPath;
 
 	public static final String OUTPUTPATH_UNPACKAGE_DESCRIPTION = "For unpackage, a directory containing the FlowFile content.";
-	public static final String OUTPUTPATH_PACKAGE_DESCRIPTION = "For package, a directory where the " + FLOWFILE_DEFAULT_FILENAME + " will be created or the name of the file.";
+	public static final String OUTPUTPATH_PACKAGE_DESCRIPTION = "For package, a directory where the FlowFile will be created or the full path to the FlowFile.";
 	
-	@JsonPropertyDescription("The output path. " + OUTPUTPATH_UNPACKAGE_DESCRIPTION + OUTPUTPATH_PACKAGE_DESCRIPTION)
+	@JsonPropertyDescription("The output path. " + OUTPUTPATH_UNPACKAGE_DESCRIPTION + OUTPUTPATH_PACKAGE_DESCRIPTION + "Represented by Java URI format.")
 	@JsonProperty("outputPath")
 	private Path outputPath;
 	

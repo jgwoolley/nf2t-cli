@@ -1,5 +1,6 @@
 package com.yelloowstone.nf2t.cli;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,10 +16,11 @@ public class FlowFilePackageVersions {
 	private final Map<Integer, FlowFilePackageVersion> flowFilePackageVersions;
 	
 	public FlowFilePackageVersions() {
-		this.flowFilePackageVersions = new HashMap<>();
-		this.flowFilePackageVersions.put(1, new FlowFilePackageVersion(StandardFlowFileMediaType.VERSION_1.getMediaType(), ".pkg", () -> new FlowFileUnpackagerV1(), () -> new FlowFilePackagerV1()));
-		this.flowFilePackageVersions.put(2, new FlowFilePackageVersion(StandardFlowFileMediaType.VERSION_2.getMediaType(), ".pkg", () -> new FlowFileUnpackagerV2(), () -> new FlowFilePackagerV2()));
-		this.flowFilePackageVersions.put(3, new FlowFilePackageVersion(StandardFlowFileMediaType.VERSION_3.getMediaType(), ".pkg", () -> new FlowFileUnpackagerV3(), () -> new FlowFilePackagerV3()));
+		final Map<Integer, FlowFilePackageVersion> flowFilePackageVersions = new HashMap<>();
+		flowFilePackageVersions.put(1, new FlowFilePackageVersion(StandardFlowFileMediaType.VERSION_1.getMediaType(), ".flowfilev1", () -> new FlowFileUnpackagerV1(), () -> new FlowFilePackagerV1()));
+		flowFilePackageVersions.put(2, new FlowFilePackageVersion(StandardFlowFileMediaType.VERSION_2.getMediaType(), ".flowfilev2", () -> new FlowFileUnpackagerV2(), () -> new FlowFilePackagerV2()));
+		flowFilePackageVersions.put(3, new FlowFilePackageVersion(StandardFlowFileMediaType.VERSION_3.getMediaType(), ".flowfilev3", () -> new FlowFileUnpackagerV3(), () -> new FlowFilePackagerV3()));
+		this.flowFilePackageVersions = Collections.unmodifiableMap(flowFilePackageVersions);
 	}
 	
 	public FlowFilePackageVersion get(int version) {
