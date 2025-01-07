@@ -46,6 +46,7 @@ I've developed several versions of this project over the years, and created a We
 
 == TODO
 
+* Add Git information to the page?
 * Get Favicons into manpages.
 * Add link:https://picocli.info/man/picocli.AutoComplete.html[AutoComplete]
 * link:https://docs.asciidoctor.org/asciidoc/latest/docinfo/#head[]
