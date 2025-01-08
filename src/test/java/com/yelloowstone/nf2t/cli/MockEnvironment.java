@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +20,9 @@ import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.nifi.flowfile.attributes.CoreAttributes;
 import org.apache.nifi.util.FlowFilePackager;
 
@@ -95,21 +99,57 @@ public class MockEnvironment implements AutoCloseable {
 			final ZipOutputStream zipOut = new ZipOutputStream(fos);
 			final FlowFilePackageVersion packageVersion = this.getPackageVersions().get(version);
 			final FlowFilePackager packager = packageVersion.getPackager();
-			
+
 			for (String example : new String[] { "1.txt", "2.txt" }) {
 				this.expectedResults += 1;
 				final ZipEntry zipEntry = new ZipEntry(example + packageVersion.getFileExtension());
 				zipOut.putNextEntry(zipEntry);
-				
+
 				final ByteArrayOutputStream out = new ByteArrayOutputStream();
 				final InputStream in = new ByteArrayInputStream(new byte[] {});
 				final Map<String, String> attributes = Map.of("Test", "Test", CoreAttributes.FILENAME.name(), example);
-				
-				packager.packageFlowFile(in , out, attributes, 0);
+
+				packager.packageFlowFile(in, out, attributes, 0);
 				zipOut.write(out.toByteArray());
 				zipOut.closeEntry();
 			}
 			zipOut.close();
+		}
+	}
+
+	public void createExampleTarGz() throws IOException {
+		final Path zipFile = Files.createFile(packagedPath.resolve("test.tar.gz"));
+
+		try (final OutputStream fos = Files.newOutputStream(zipFile);
+				GzipCompressorOutputStream gzipOutputStream = new GzipCompressorOutputStream(fos);
+				TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(gzipOutputStream)) {
+
+			tarOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU); // Handle long file names
+
+			for(int version = 1; version <=3; version++) {
+				this.expectedResults += 1;
+
+				final FlowFilePackageVersion packageVersion = this.getPackageVersions().get(version);
+				
+				final FlowFilePackager packager = packageVersion.getPackager();
+				
+				final ByteArrayOutputStream flowfileStream = new ByteArrayOutputStream();
+				final byte[] content = "Hello World!".getBytes(StandardCharsets.UTF_8);
+				try(InputStream is = new ByteArrayInputStream(content)) {
+					final Map<String, String> attributes = Map.of("Test", "Test");
+					packager.packageFlowFile(is, flowfileStream, attributes, content.length);
+				}
+				
+				final byte[] out = flowfileStream.toByteArray();
+				final long size = out.length;
+				
+				final TarArchiveEntry tarEntry = new TarArchiveEntry("test" + packageVersion.getFileExtension());
+				tarEntry.setSize(size);
+
+				tarOutputStream.putArchiveEntry(tarEntry);			
+				tarOutputStream.write(out);
+				tarOutputStream.closeArchiveEntry();
+			}
 		}
 	}
 

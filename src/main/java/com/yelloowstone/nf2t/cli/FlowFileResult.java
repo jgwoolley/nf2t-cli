@@ -1,6 +1,5 @@
 package com.yelloowstone.nf2t.cli;
 
-import java.net.URI;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -11,11 +10,11 @@ public class FlowFileResult {
 	
 	@JsonPropertyDescription("Represents the location of the Packaged FlowFile, represented by Java URI format.")
 	@JsonProperty("flowFilePath")
-	private final URI flowFilePath;
+	private final SourceFile flowFilePath;
 	
 	@JsonPropertyDescription("Represents the location of the FlowFile Content, represented by Java URI format.")
 	@JsonProperty("contentPath")
-	private URI contentPath;
+	private SourceFile contentPath;
 	
 	@JsonPropertyDescription("Represents the FlowFile Attributes.")
 	@JsonProperty("attributes")
@@ -26,18 +25,18 @@ public class FlowFileResult {
 	private final long contentSize;
 	
 	@JsonCreator
-	public FlowFileResult(@JsonProperty("flowFilePath") final URI flowFilePath, @JsonProperty("contentPath") final URI contentPath, @JsonProperty("attributes") final Map<String,String> attributes, @JsonProperty("contentSize") final long size) {
+	public FlowFileResult(@JsonProperty("flowFilePath") final SourceFile flowFilePath, @JsonProperty("contentPath") final SourceFile contentPath, @JsonProperty("attributes") final Map<String,String> attributes, @JsonProperty("contentSize") final long size) {
 		this.flowFilePath = flowFilePath;
 		this.contentPath = contentPath;
 		this.attributes = attributes;
 		this.contentSize = size;
 	}
 
-	public URI getFlowFilePath() {
+	public SourceFile getFlowFilePath() {
 		return flowFilePath;
 	}
 
-	public URI getContentPath() {
+	public SourceFile getContentPath() {
 		return contentPath;
 	}
 
@@ -49,7 +48,7 @@ public class FlowFileResult {
 		return contentSize;
 	}
 
-	public void setContentPath(URI contentPath) {
+	public void setContentPath(SourceFile contentPath) {
 		this.contentPath = contentPath;
 	}
 }

@@ -46,6 +46,7 @@ I've developed several versions of this project over the years, and created a We
 
 == TODO
 
+* Can pass variables with asciidoc link:https://stackoverflow.com/questions/63622953/asciidoctor-activate-substitution-in-cli-attributes[]
 * Remove concept of version as provided by CLI arg, or make version and prefix additional options for configuring how FlowFileStream(s) are parsed.
 * Add a seperate file metadata section w/ uuids, and connect parents w/ uuids, and flowfiles to uuids
 * Add JavaDocs Comments to page to stop "warning: no comment" errors.

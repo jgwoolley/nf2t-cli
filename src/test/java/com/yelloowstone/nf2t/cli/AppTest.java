@@ -87,6 +87,7 @@ public class AppTest {
 					environment.createExampleContent("2.txt", "");
 					environment.createExampleContent("3", new byte[] {});
 					environment.createExampleZip();
+					environment.createExampleTarGz();
 				}
 				
 				final Path contentPath = environment.getContentPath();
