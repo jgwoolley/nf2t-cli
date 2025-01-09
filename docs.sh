@@ -35,4 +35,4 @@ unzip "./target/${prefix_name}-javadoc.jar" -d ./dist/javadocs
 java -jar "./target/${prefix_name}.jar" gen-manpage -d ./dist/man/
 
 asciidoctor --source-dir "./dist/man" "./dist/man/*.adoc"
-asciidoctor README.asciidoc --out-file "./dist/index.html"
+asciidoctor README.asciidoc "--attribute" "mavenGroupId=${groupId}" "--attribute" "mavenArtifactId=${artifactId}" "--attribute" "mavenVersion=${version}" "--out-file" "./dist/index.html"

@@ -3,6 +3,14 @@
 :description: A Java CLI for parsing Apache NiFi FlowFiles.
 :favicon: ./favicon.svg
 
+ifndef::env-github[]
+== Version
+* GroupId: {mavenGroupId}
+* ArtifactId: {mavenArtifactId}
+* Version: {mavenVersion}
+
+endif::[]
+
 == Description
 
 A Java CLI for parsing Apache NiFi FlowFileStreams. One or more FlowFiles can be serialized into a FlowFileStream, in one of three formats.
