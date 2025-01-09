@@ -2,9 +2,9 @@
 .classpath
 .project
 .settings/
-dependency-reduced-pom.xml
-target/
-maven.zip
-com/
-dist/
-quick_test
+/dependency-reduced-pom.xml
+/target/
+/maven.zip
+/com/
+/dist/
+/quick_test/
