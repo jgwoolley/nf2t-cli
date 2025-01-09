@@ -43,9 +43,11 @@ I've developed several versions of this project over the years, and created a We
 
 == Example Scripts
 * link:./download_jar.sh[download_jar.sh]: Download the JAR from MAVEN
+* link:./test.sh[test.sh]: After running the build script, will test the executable jar.
 
 == TODO
 
+* In the link:test.sh[] example the FlowFile path is "./quick_test//2/data.flowfilev3" which the /2/data.flowfilev3 seems to be refering to the path in the ZIP file.
 * Can pass variables with asciidoc link:https://stackoverflow.com/questions/63622953/asciidoctor-activate-substitution-in-cli-attributes[]
 * Remove concept of version as provided by CLI arg, or make version and prefix additional options for configuring how FlowFileStream(s) are parsed.
 * Add a seperate file metadata section w/ uuids, and connect parents w/ uuids, and flowfiles to uuids
@@ -55,6 +57,5 @@ I've developed several versions of this project over the years, and created a We
 * Get Favicons into manpages.
 * Add link:https://picocli.info/man/picocli.AutoComplete.html[AutoComplete].
 * link:https://docs.asciidoctor.org/asciidoc/latest/docinfo/#head[].
-* FileSystem or InputStreams to parse?
 * Review the standard implementation, make sure this implementation is as similiar as possible: link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[].
 * Always say unpackage before package reflecting its primacy.
