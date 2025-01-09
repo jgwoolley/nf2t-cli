@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -165,8 +166,9 @@ public class App implements Callable<Integer> {
 			@Option(names = { "-o", "--out" }, description = "The output path."
 					+ FlowFileStreamResult.OUTPUTPATH_UNPACKAGE_DESCRIPTION, required = true) final String outputOption,
 			@Option(names = { "-u",
-					"--uuid" }, description = FlowFileStreamResult.UUID_DESCRIPTION, defaultValue = "true") final boolean uuidFilenames) {
-		final FlowFileStreamResult result = createResult(version, extension, uuidFilenames, inputOption, outputOption);
+					"--uuid" }, description = FlowFileStreamResult.UUID_DESCRIPTION, defaultValue = "true") final boolean uuidFilenames,
+			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath) {
+		final FlowFileStreamResult result = createResult(version, extension, uuidFilenames, inputOption, outputOption, resultsPath);
 
 		// Unpack Frequently Used Variables
 		final Path inputPath = result.getInputPath();
@@ -231,8 +233,9 @@ public class App implements Callable<Integer> {
 			@Option(names = { "-i", "--in" }, description = "The input path."
 					+ FlowFileStreamResult.INPUTPATH_PACKAGE_DESCRIPTION, required = true) final String inputOption,
 			@Option(names = { "-o", "--out" }, description = "The output path."
-					+ FlowFileStreamResult.OUTPUTPATH_PACKAGE_DESCRIPTION, required = true) final String outputOption) {
-		final FlowFileStreamResult result = createResult(version, extension, true, inputOption, outputOption);
+					+ FlowFileStreamResult.OUTPUTPATH_PACKAGE_DESCRIPTION, required = true) final String outputOption,
+			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath) {
+		final FlowFileStreamResult result = createResult(version, extension, true, inputOption, outputOption, resultsPath);
 
 		// Unpack Frequently Used Variables
 		final Path inputPath = result.getInputPath();
@@ -335,7 +338,12 @@ public class App implements Callable<Integer> {
 		try {
 			String x = this.mapper.writer().writeValueAsString(result);
 			spec.commandLine().getOut().println(x);
-		} catch (JsonProcessingException e) {
+			
+			if(result.getResultsPath() != null) {
+				Files.write(result.getResultsPath(), x.getBytes(StandardCharsets.UTF_8));
+			}
+			
+		} catch (IOException e) {
 			e.printStackTrace(spec.commandLine().getErr());
 			return true;
 		}
@@ -344,16 +352,21 @@ public class App implements Callable<Integer> {
 	}
 
 	public FlowFileStreamResult createResult(final int version, String extension, final boolean uuidFilenames,
-			final String inputOption, String outputOption) {
+			final String inputOption, String outputOption, String resultsOption) {
 		final Path inputPath = Paths.get(inputOption == null ? "." : inputOption);
 		final Path outputPath = outputOption == null ? inputPath : Paths.get(outputOption);
-
+		Path resultsPath = resultsOption == null ? null : Paths.get(resultsOption);
+		
 		if (extension.length() <= 0) {
 			extension = packageVersions.get(version).getFileExtension();
 		}
 
+		if(resultsPath != null && Files.isDirectory(resultsPath)) {
+			resultsPath = resultsPath.resolve("results.json");
+		}
+		
 		long unixTime = System.currentTimeMillis() / 1000L;
-		return new FlowFileStreamResult(version, extension, uuidFilenames, inputPath, outputPath, unixTime);
+		return new FlowFileStreamResult(version, extension, uuidFilenames, inputPath, outputPath, resultsPath, unixTime);
 	}
 
 	public static long updateDefaultAttributes(Map<String, String> attributes, Path path) throws IOException {

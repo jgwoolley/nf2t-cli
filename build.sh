@@ -3,11 +3,17 @@ set -e
 # Configuration
 GPG_USER="0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73"
 
+# Startup Variables
+
+if [ "$CI" = "true" ]; then
+	MVN_ARGS="--no-transfer-progress --batch-mode"
+fi
+
 # Evaluate Maven Coordinates
 
-mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp
-mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp
-mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp
+mvn $MVN_ARGS help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp
+mvn $MVN_ARGS help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp
+mvn $MVN_ARGS help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp
 
 groupId=$(cat groupId.mvnhelp)
 artifactId=$(cat artifactId.mvnhelp)
@@ -21,10 +27,10 @@ artifact_path="${groupId//./\/}/${artifactId//./\/}/${version}/"
 prefix_name="${artifactId}-${version}"
 prefix_path="${artifact_path}/${prefix_name}"
 
-
 # Run Maven
 
-mvn clean install --no-transfer-progress
+# TODO: Or --quit https://maven.apache.org/ref/3.6.1/maven-embedder/cli.html
+mvn clean install $MVN_ARGS
 
 # Create Maven Central ZIP Folder Structure
 
@@ -41,7 +47,7 @@ fi
 rm -rf "$artifact_root_path"
 mkdir --parents "$artifact_path"
 
-mvn help:effective-pom "-Doutput=${prefix_path}.pom"
+mvn help:effective-pom $MVN_ARGS "-Doutput=${prefix_path}.pom"
 cp "./target/${prefix_name}-javadoc.jar" "$artifact_path"
 cp "./target/${prefix_name}-sources.jar" "$artifact_path"
 cp "./target/${prefix_name}.jar" "$artifact_path"
@@ -57,11 +63,13 @@ for file in "$artifact_path"/*; do
 	sha512sum $file | cut -d ' ' -f 1 > "$file.sha512"
 
 	if gpg --yes --local-user $GPG_USER -ab $file; then
-	 	echo "Success"
+	 	echo "GPG: Successfully Signed"
+	else
+		echo "GPG: Failed to Sign"
 	fi
 done
 
-rm -f "./maven.zip"
+rm --force "./maven.zip"
 zip -r "./maven.zip" "$artifact_path"
 
 echo "${groupId}.${artifactId}.${version}"
