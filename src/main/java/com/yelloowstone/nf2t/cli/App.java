@@ -79,7 +79,7 @@ public class App implements Callable<Integer> {
 					if (filename != null) {
 						Path newContentPath = contentPath.getParent().resolve(filename);
 						Files.move(contentPath, newContentPath);
-						flowFileResult.setContentPath(new SourceFile(newContentPath.toAbsolutePath().toString(),
+						flowFileResult.setContentPath(new SourceFile(null, newContentPath.toAbsolutePath().toString(),
 								newContentPath.getFileName().getFileName().toString(),
 								flowFileResult.getContentSize()));
 					}
@@ -107,7 +107,7 @@ public class App implements Callable<Integer> {
 				while ((entry = zipIs.getNextEntry()) != null) {
 					final String newAbsolutePath = entry.getName();
 					final String newFilename = new File(entry.getName()).getName();
-					unpackageInputStream(result, zipIs, new SourceFile(newAbsolutePath, newFilename, entry.getSize()));
+					unpackageInputStream(result, zipIs, new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
 				}
 			} catch (Exception e) {
 				errors.add(new FlowFileErrorResult(e, source));
@@ -128,7 +128,7 @@ public class App implements Callable<Integer> {
 					} else {
 						final String newAbsolutePath = entry.getName();
 						final String newFilename = new File(entry.getName()).getName();
-						unpackageInputStream(result, tarInputStream, new SourceFile(newAbsolutePath, newFilename, entry.getSize()));
+						unpackageInputStream(result, tarInputStream, new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
 					}
 
 				}
@@ -173,7 +173,7 @@ public class App implements Callable<Integer> {
 		final Path outputPath = result.getOutputPath();
 		final List<FlowFileErrorResult> errors = result.getErrors();
 
-		final SourceFile source = SourceFile.fromPath(inputPath);
+		final SourceFile source = SourceFile.fromPath(null, inputPath);
 		
 		// Get Packager For Current Version
 		final FlowFilePackageVersion packageVersion = packageVersions.get(version);
@@ -192,7 +192,7 @@ public class App implements Callable<Integer> {
 			if (Files.isDirectory(inputPath)) {
 				try (final Stream<Path> files = Files.list(inputPath)) {
 					files.forEach(x -> {
-						final SourceFile newSource = SourceFile.fromPath(x);
+						final SourceFile newSource = SourceFile.fromPath(null, x);
 						try(final InputStream is = Files.newInputStream(x)) {
 							unpackageInputStream(result, is, newSource);
 						} catch (IOException e) {
@@ -239,8 +239,8 @@ public class App implements Callable<Integer> {
 		Path outputPath = result.getOutputPath();
 		final List<FlowFileErrorResult> errors = result.getErrors();
 
-		final SourceFile source = SourceFile.fromPath(inputPath);
-		final SourceFile output = SourceFile.fromPath(outputPath);
+		final SourceFile source = SourceFile.fromPath(null, inputPath);
+		final SourceFile output = SourceFile.fromPath(null, outputPath);
 
 		
 		// Get Packager For Current Version
@@ -280,7 +280,7 @@ public class App implements Callable<Integer> {
 
 		try (OutputStream outputStream = Files.newOutputStream(outputPath)) {
 			for (Path contentPath : contentPaths) {
-				final SourceFile content = SourceFile.fromPath(outputPath);
+				final SourceFile content = SourceFile.fromPath(null, outputPath);
 
 				try {
 					final Map<String, String> attributes = new HashMap<>();
