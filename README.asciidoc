@@ -3,18 +3,11 @@
 :description: A Java CLI for parsing Apache NiFi FlowFiles.
 :favicon: ./favicon.svg
 
-ifndef::env-github[]
-== Version
-* GroupId: {mavenGroupId}
-* ArtifactId: {mavenArtifactId}
-* Version: {mavenVersion}
-
-endif::[]
-
 == Description
 
 A Java CLI for parsing Apache NiFi FlowFileStreams. One or more FlowFiles can be serialized into a FlowFileStream, in one of three formats.
 
+* link:https://www.nf2t.net/[Web Gui Version]
 ifdef::env-github[]
 * link:https://jgwoolley.github.io/nf2t-cli/man/[Usage Guide].
 endif::[]
@@ -32,6 +25,16 @@ endif::[]
 ifndef::env-github[]
 * link:https://central.sonatype.com/artifact/com.yelloowstone.nf2t/nf2t-cli[Maven Central Repository].
 * link:./maven.zip[Artifacts to Publish to Maven Central (Currently Lack GPG Signing)].
+endif::[]
+
+ifndef::env-github[]
+== Artifact Information
+|===
+|Maven GroupId|link:https://central.sonatype.com/artifact/{mavenGroupId}/{mavenArtifactId}[{mavenGroupId}]
+|Maven ArtifactId|link:https://central.sonatype.com/artifact/{mavenGroupId}/{mavenArtifactId}[{mavenArtifactId}]
+|Maven Version|link:https://central.sonatype.com/artifact/{mavenGroupId}/{mavenArtifactId}[{mavenVersion}]
+|Git Hash|link:https://github.com/jgwoolley/nf2t-cli/commit/{gitHash}[{gitHash}]
+|===
 endif::[]
 
 == Background

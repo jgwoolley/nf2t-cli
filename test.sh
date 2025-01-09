@@ -27,7 +27,6 @@ mkdir --parent "$TEST_PATH/3"
 mkdir --parent "$TEST_PATH/4"
 mkdir --parent "$TEST_PATH/5"
 
-
 touch "$TEST_PATH/1/A" "$TEST_PATH/1/B" "$TEST_PATH/1/C"
 
 java -jar "./target/${prefix_name}.jar" "package" "--in" "$TEST_PATH/1" "--out" "$TEST_PATH/2"

@@ -5,10 +5,12 @@ set -e
 mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp
 mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp
 mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp
+git log -1 --pretty=format:'%H' >> gitHash.mvnhelp
 
 groupId=$(cat groupId.mvnhelp)
 artifactId=$(cat artifactId.mvnhelp)
 version=$(cat version.mvnhelp)
+gitHash=$(cat gitHash.mvnhelp)
 
 rm *.mvnhelp
 
@@ -35,4 +37,4 @@ unzip "./target/${prefix_name}-javadoc.jar" -d ./dist/javadocs
 java -jar "./target/${prefix_name}.jar" gen-manpage -d ./dist/man/
 
 asciidoctor --source-dir "./dist/man" "./dist/man/*.adoc"
-asciidoctor README.asciidoc "--attribute" "mavenGroupId=${groupId}" "--attribute" "mavenArtifactId=${artifactId}" "--attribute" "mavenVersion=${version}" "--out-file" "./dist/index.html"
+asciidoctor README.asciidoc "--attribute" "gitHash=${gitHash}" "--attribute" "mavenGroupId=${groupId}" "--attribute" "mavenArtifactId=${artifactId}" "--attribute" "mavenVersion=${version}" "--out-file" "./dist/index.html"
