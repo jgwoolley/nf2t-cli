@@ -1,3 +1,4 @@
+*.flowfilev3
 *.adoc
 .vscode
 .classpath

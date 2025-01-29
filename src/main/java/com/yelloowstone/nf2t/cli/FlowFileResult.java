@@ -16,19 +16,19 @@ public class FlowFileResult {
 	@JsonProperty("contentPath")
 	private SourceFile contentPath;
 	
-	@JsonPropertyDescription("Represents the FlowFile Attributes.")
+	@JsonPropertyDescription("Represents the FlowFile attribute key, and value. The value is an FlowFile Attribute Expression, and can resolve variables from other attributes. Expressions should not reference other attributes that also contain expressions.")
 	@JsonProperty("attributes")
-	private final Map<String,String> attributes;
+	private final Map<String,String> rawAttributeExpressions;
 	
 	@JsonPropertyDescription("Represents the size of the FlowFile Content.")
 	@JsonProperty("contentSize")
 	private final long contentSize;
 	
 	@JsonCreator
-	public FlowFileResult(@JsonProperty("flowFilePath") final SourceFile flowFilePath, @JsonProperty("contentPath") final SourceFile contentPath, @JsonProperty("attributes") final Map<String,String> attributes, @JsonProperty("contentSize") final long size) {
+	public FlowFileResult(@JsonProperty("flowFilePath") final SourceFile flowFilePath, @JsonProperty("contentPath") final SourceFile contentPath, @JsonProperty("attributes") final Map<String,String> rawAttributeExpressions, @JsonProperty("contentSize") final long size) {
 		this.flowFilePath = flowFilePath;
 		this.contentPath = contentPath;
-		this.attributes = attributes;
+		this.rawAttributeExpressions = rawAttributeExpressions;
 		this.contentSize = size;
 	}
 
@@ -40,8 +40,8 @@ public class FlowFileResult {
 		return contentPath;
 	}
 
-	public Map<String,String> getAttributes() {
-		return attributes;
+	public Map<String,String> getRawAttributeExpressions() {
+		return rawAttributeExpressions;
 	}
 
 	public long getContentSize() {

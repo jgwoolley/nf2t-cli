@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
@@ -22,6 +23,9 @@ import java.util.zip.ZipInputStream;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.nifi.attribute.expression.language.PreparedQuery;
+import org.apache.nifi.attribute.expression.language.Query;
+import org.apache.nifi.attribute.expression.language.StandardEvaluationContext;
 import org.apache.nifi.flowfile.attributes.CoreAttributes;
 import org.apache.nifi.util.FlowFilePackager;
 import org.apache.nifi.util.FlowFileUnpackager;
@@ -76,7 +80,7 @@ public class App implements Callable<Integer> {
 				}
 
 				if (contentPath != null && result.isUuidFilenames() && flowFileResult != null) {
-					String filename = flowFileResult.getAttributes().get(CoreAttributes.FILENAME.key());
+					String filename = flowFileResult.getRawAttributeExpressions().get(CoreAttributes.FILENAME.key());
 					if (filename != null) {
 						Path newContentPath = contentPath.getParent().resolve(filename);
 						Files.move(contentPath, newContentPath);
@@ -180,10 +184,8 @@ public class App implements Callable<Integer> {
 					+ FlowFileStreamResult.OUTPUTPATH_UNPACKAGE_DESCRIPTION, required = false) final String outputOption,
 			@Option(names = { "-u",
 					"--uuid" }, description = FlowFileStreamResult.UUID_DESCRIPTION, defaultValue = "true") final boolean uuidFilenames,
-			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath,
-			@Option(names = {"-a", "--attribute"}, description=FlowFileStreamResult.DEFAULT_ATTRIBUTES_DESCRIPTION, required=false) final Map<String,String> attributes,
-			@Option(names = {"-k", "--keep-attributes"}, description=FlowFileStreamResult.KEEP_ATTRIBUTES_DESCRIPTION, defaultValue="true", required=false) final boolean keepAttributes) {
-		final FlowFileStreamResult result = createResult(version, extension, uuidFilenames, inputOption, outputOption, resultsPath, attributes, keepAttributes);
+			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath) {
+		final FlowFileStreamResult result = createResult(version, extension, uuidFilenames, inputOption, outputOption, resultsPath, new HashMap<>(), true);
 
 		// Unpack Frequently Used Variables
 		final Path inputPath = result.getInputPath();
@@ -249,8 +251,10 @@ public class App implements Callable<Integer> {
 					+ FlowFileStreamResult.INPUTPATH_PACKAGE_DESCRIPTION, required = true) final String inputOption,
 			@Option(names = { "-o", "--out" }, description = "The output path."
 					+ FlowFileStreamResult.OUTPUTPATH_PACKAGE_DESCRIPTION, required = true) final String outputOption,
-			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath) {
-		final FlowFileStreamResult result = createResult(version, extension, true, inputOption, outputOption, resultsPath, new HashMap<>(), true);
+			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath,
+			@Option(names = {"-a", "--attribute"}, description=FlowFileStreamResult.DEFAULT_ATTRIBUTES_DESCRIPTION, required=false) final Map<String,String> rawAttributeExpressions,
+			@Option(names = {"-k", "--keep-attributes"}, description=FlowFileStreamResult.KEEP_ATTRIBUTES_DESCRIPTION, defaultValue="true", required=false) final boolean keepAttributes) {
+		final FlowFileStreamResult result = createResult(version, extension, true, inputOption, outputOption, resultsPath, rawAttributeExpressions == null ? new HashMap<>(): rawAttributeExpressions, keepAttributes);
 
 		// Unpack Frequently Used Variables
 		final Path inputPath = result.getInputPath();
@@ -302,6 +306,12 @@ public class App implements Callable<Integer> {
 
 		final FlowFilePackager packager = packageVersion.getPackager();
 
+		final Map<String, PreparedQuery> attributeExpressions = new HashMap<>();
+
+		for(final Entry<String, String> attribute: result.getDefaultAttributes().entrySet()) {
+			attributeExpressions.put(attribute.getKey(), Query.prepare(attribute.getValue()));
+		}
+					
 		try (OutputStream outputStream = Files.newOutputStream(outputPath)) {
 			for (Path contentPath : contentPaths) {
 				final SourceFile content = SourceFile.fromPath(null, outputPath);
@@ -309,12 +319,18 @@ public class App implements Callable<Integer> {
 				try {
 					final long contentSize = Files.size(contentPath);
 					final Map<String, String> defaultAttributes = generateDefaultAttributes(contentPath, contentSize);
+					defaultAttributes.putAll(result.getDefaultAttributes());
 					final Map<String, String> attributes = new HashMap<>();
 					
 					if(result.keepAttributes) {
 						attributes.putAll(defaultAttributes);
 					}
 					
+					final StandardEvaluationContext evaluationContext = new StandardEvaluationContext(defaultAttributes);
+					for(final Entry<String,PreparedQuery> attribute: attributeExpressions.entrySet()) {
+						attributes.put(attribute.getKey(), attribute.getValue().evaluateExpressions(evaluationContext, null));
+					}
+										
 					try (InputStream inputStream = Files.newInputStream(contentPath)) {
 						packager.packageFlowFile(inputStream, outputStream, attributes, contentSize);
 
@@ -378,7 +394,7 @@ public class App implements Callable<Integer> {
 	}
 
 	public FlowFileStreamResult createResult(final int version, String extension, final boolean uuidFilenames,
-			final String inputOption, String outputOption,  final String resultsOption, final Map<String, String> defaultAttributes, boolean keepAttributes) {
+			final String inputOption, String outputOption,  final String resultsOption, final Map<String, String> attributeExpressions, boolean keepAttributes) {
 		final Path inputPath = Paths.get(inputOption == null ? "." : inputOption);
 		final Path outputPath = outputOption == null || outputOption.length() <= 0 ? null : Paths.get(outputOption);
 		Path resultsPath = resultsOption == null ? null : Paths.get(resultsOption);
@@ -392,14 +408,16 @@ public class App implements Callable<Integer> {
 		}
 		
 		long unixTime = System.currentTimeMillis() / 1000L;
-		return new FlowFileStreamResult(version, extension, uuidFilenames, inputPath, outputPath, resultsPath, unixTime, defaultAttributes, keepAttributes);
+		return new FlowFileStreamResult(version, extension, uuidFilenames, inputPath, outputPath, resultsPath, unixTime, attributeExpressions, keepAttributes);
 	}
 	
 	public static Map<String, String> generateDefaultAttributes(final Path path, final long contentSize) throws IOException {
 		final Map<String, String> attributes = new HashMap<>();
 		
 		attributes.put(CoreAttributes.FILENAME.key(), path.getFileName().toString());
-		attributes.put(CoreAttributes.PATH.key(), path.getParent().toString());
+		if(path.getParent() != null) {
+			attributes.put(CoreAttributes.PATH.key(), path.getParent().toString());
+		}
 		attributes.put(CoreAttributes.ABSOLUTE_PATH.key(), path.toString());
 		attributes.put(FILE_SIZE_ATTRIBUTE, Long.toString(contentSize));
 		

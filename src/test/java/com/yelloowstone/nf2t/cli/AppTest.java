@@ -39,7 +39,7 @@ public class AppTest {
 				final Path contentPath = environment.getContentPath();
 				final Path packagedPath = environment.getPackagedPath();
 				
-				final String sw = environment.execute(x -> new String[] {"package", "--version", Integer.toString(version), "--in", contentPath.toString(), "--out", packagedPath.toString()});
+				final String sw = environment.execute(x -> new String[] {"package", "--version", Integer.toString(version), "--in", contentPath.toString(), "--out", packagedPath.toString(), "--attribute", "key=${foo}$${foo}$$${foo}", "--attribute", "key2=${size}"});
 				
 				final FlowFileStreamResult result = reader.readValue(sw, FlowFileStreamResult.class);
 
@@ -129,7 +129,7 @@ public class AppTest {
 				}
 
 				final String sw = environment.execute(x -> new String[] {"unpackage", "--version", Integer.toString(version),
-						"--in", packagedPath.toString(), "--out", unpackagedPath.toString(), "--attribute", "key=value"});
+						"--in", packagedPath.toString(), "--out", unpackagedPath.toString()});
 
 				System.out.println("\tResult:\n\t" + sw.toString());
 				final FlowFileStreamResult result = reader.readValue(sw.toString(), FlowFileStreamResult.class);
