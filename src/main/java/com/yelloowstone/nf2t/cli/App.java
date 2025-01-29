@@ -66,7 +66,7 @@ public class App implements Callable<Integer> {
 			do {
 				final Path contentPath = result.getOutputPath().resolve(UUID.randomUUID().toString() + ".dat");
 				FlowFileResult flowFileResult = null;
-				try (OutputStream out = Files.newOutputStream(contentPath)) {
+				try (OutputStream out = contentPath == null ? OutputStream.nullOutputStream(): Files.newOutputStream(contentPath)) {
 					final Map<String, String> attributes = unpackager.unpackageFlowFile(is, out);
 					final long contentSize = Files.size(contentPath);
 					flowFileResult = new FlowFileResult(source, null, attributes, contentSize);
@@ -75,7 +75,7 @@ public class App implements Callable<Integer> {
 					throw new Exception("Could not unpackage " + source.getAbsolutePath(), e);
 				}
 
-				if (result.isUuidFilenames() && flowFileResult != null) {
+				if (contentPath != null && result.isUuidFilenames() && flowFileResult != null) {
 					String filename = flowFileResult.getAttributes().get(CoreAttributes.FILENAME.key());
 					if (filename != null) {
 						Path newContentPath = contentPath.getParent().resolve(filename);
@@ -92,6 +92,47 @@ public class App implements Callable<Integer> {
 		}
 	}
 
+	private void unpackageInputStreamZip(final FlowFileStreamResult result, final InputStream is,
+			final SourceFile source) {
+		final List<FlowFileErrorResult> errors = result.getErrors();
+		try (ZipInputStream zipIs = new ZipInputStream(is)) {
+			ZipEntry entry;
+			while ((entry = zipIs.getNextEntry()) != null) {
+				final String newAbsolutePath = entry.getName();
+				final String newFilename = new File(entry.getName()).getName();
+				unpackageInputStream(result, zipIs, new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
+			}
+		} catch (Exception e) {
+			errors.add(new FlowFileErrorResult(e, source));
+		}
+	}
+	
+	private void unpackageInputStreamGzip(final FlowFileStreamResult result, final InputStream is,
+			final SourceFile source) {
+		final List<FlowFileErrorResult> errors = result.getErrors();
+		
+		try (final GzipCompressorInputStream gzipInputStream = new GzipCompressorInputStream(is);
+				final TarArchiveInputStream tarInputStream = new TarArchiveInputStream(gzipInputStream);) {
+			ArchiveEntry entry;
+			while ((entry = tarInputStream.getNextEntry()) != null) {
+				if (entry.isDirectory()) {
+					byte[] buffer = new byte[1024];
+					while (tarInputStream.read(buffer) > 0) {
+
+					}
+				} else {
+					final String newAbsolutePath = entry.getName();
+					final String newFilename = new File(entry.getName()).getName();
+					unpackageInputStream(result, tarInputStream, new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
+				}
+
+			}
+
+		} catch (Exception e) {
+			errors.add(new FlowFileErrorResult(e, source));
+		}
+	}
+	
 	private void unpackageInputStream(final FlowFileStreamResult result, final InputStream is,
 			final SourceFile source) {
 		final List<FlowFileErrorResult> errors = result.getErrors();
@@ -103,40 +144,12 @@ public class App implements Callable<Integer> {
 		}
 		
 		if (absolutePath.endsWith(".zip")) {
-			try (ZipInputStream zipIs = new ZipInputStream(is)) {
-				ZipEntry entry;
-				while ((entry = zipIs.getNextEntry()) != null) {
-					final String newAbsolutePath = entry.getName();
-					final String newFilename = new File(entry.getName()).getName();
-					unpackageInputStream(result, zipIs, new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
-				}
-			} catch (Exception e) {
-				errors.add(new FlowFileErrorResult(e, source));
-			}
+			unpackageInputStreamZip(result, is, source);
 			return;
 		}
 
 		if (absolutePath.endsWith(".tar.gz")) {
-			try (final GzipCompressorInputStream gzipInputStream = new GzipCompressorInputStream(is);
-					final TarArchiveInputStream tarInputStream = new TarArchiveInputStream(gzipInputStream);) {
-				ArchiveEntry entry;
-				while ((entry = tarInputStream.getNextEntry()) != null) {
-					if (entry.isDirectory()) {
-						byte[] buffer = new byte[1024];
-						while (tarInputStream.read(buffer) > 0) {
-
-						}
-					} else {
-						final String newAbsolutePath = entry.getName();
-						final String newFilename = new File(entry.getName()).getName();
-						unpackageInputStream(result, tarInputStream, new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
-					}
-
-				}
-
-			} catch (Exception e) {
-				errors.add(new FlowFileErrorResult(e, source));
-			}
+			unpackageInputStreamGzip(result, is, source);
 			return;
 		}
 
@@ -164,11 +177,13 @@ public class App implements Callable<Integer> {
 			@Option(names = { "-i", "--in" }, description = "The input path."
 					+ FlowFileStreamResult.INPUTPATH_UNPACKAGE_DESCRIPTION, required = true) final String inputOption,
 			@Option(names = { "-o", "--out" }, description = "The output path."
-					+ FlowFileStreamResult.OUTPUTPATH_UNPACKAGE_DESCRIPTION, required = true) final String outputOption,
+					+ FlowFileStreamResult.OUTPUTPATH_UNPACKAGE_DESCRIPTION, required = false) final String outputOption,
 			@Option(names = { "-u",
 					"--uuid" }, description = FlowFileStreamResult.UUID_DESCRIPTION, defaultValue = "true") final boolean uuidFilenames,
-			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath) {
-		final FlowFileStreamResult result = createResult(version, extension, uuidFilenames, inputOption, outputOption, resultsPath);
+			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath,
+			@Option(names = {"-a", "--attribute"}, description=FlowFileStreamResult.DEFAULT_ATTRIBUTES_DESCRIPTION, required=false) final Map<String,String> attributes,
+			@Option(names = {"-k", "--keep-attributes"}, description=FlowFileStreamResult.KEEP_ATTRIBUTES_DESCRIPTION, defaultValue="true", required=false) final boolean keepAttributes) {
+		final FlowFileStreamResult result = createResult(version, extension, uuidFilenames, inputOption, outputOption, resultsPath, attributes, keepAttributes);
 
 		// Unpack Frequently Used Variables
 		final Path inputPath = result.getInputPath();
@@ -235,11 +250,17 @@ public class App implements Callable<Integer> {
 			@Option(names = { "-o", "--out" }, description = "The output path."
 					+ FlowFileStreamResult.OUTPUTPATH_PACKAGE_DESCRIPTION, required = true) final String outputOption,
 			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath) {
-		final FlowFileStreamResult result = createResult(version, extension, true, inputOption, outputOption, resultsPath);
+		final FlowFileStreamResult result = createResult(version, extension, true, inputOption, outputOption, resultsPath, new HashMap<>(), true);
 
 		// Unpack Frequently Used Variables
 		final Path inputPath = result.getInputPath();
+		
 		Path outputPath = result.getOutputPath();
+		
+		if(outputPath == null) {
+			throw new IllegalArgumentException("Output Path must not be empty.");
+		}
+		
 		final List<FlowFileErrorResult> errors = result.getErrors();
 
 		final SourceFile source = SourceFile.fromPath(null, inputPath);
@@ -286,9 +307,14 @@ public class App implements Callable<Integer> {
 				final SourceFile content = SourceFile.fromPath(null, outputPath);
 
 				try {
+					final long contentSize = Files.size(contentPath);
+					final Map<String, String> defaultAttributes = generateDefaultAttributes(contentPath, contentSize);
 					final Map<String, String> attributes = new HashMap<>();
-					final long contentSize = updateDefaultAttributes(attributes, contentPath);
-
+					
+					if(result.keepAttributes) {
+						attributes.putAll(defaultAttributes);
+					}
+					
 					try (InputStream inputStream = Files.newInputStream(contentPath)) {
 						packager.packageFlowFile(inputStream, outputStream, attributes, contentSize);
 
@@ -352,9 +378,9 @@ public class App implements Callable<Integer> {
 	}
 
 	public FlowFileStreamResult createResult(final int version, String extension, final boolean uuidFilenames,
-			final String inputOption, String outputOption, String resultsOption) {
+			final String inputOption, String outputOption,  final String resultsOption, final Map<String, String> defaultAttributes, boolean keepAttributes) {
 		final Path inputPath = Paths.get(inputOption == null ? "." : inputOption);
-		final Path outputPath = outputOption == null ? inputPath : Paths.get(outputOption);
+		final Path outputPath = outputOption == null || outputOption.length() <= 0 ? null : Paths.get(outputOption);
 		Path resultsPath = resultsOption == null ? null : Paths.get(resultsOption);
 		
 		if (extension.length() <= 0) {
@@ -366,18 +392,18 @@ public class App implements Callable<Integer> {
 		}
 		
 		long unixTime = System.currentTimeMillis() / 1000L;
-		return new FlowFileStreamResult(version, extension, uuidFilenames, inputPath, outputPath, resultsPath, unixTime);
+		return new FlowFileStreamResult(version, extension, uuidFilenames, inputPath, outputPath, resultsPath, unixTime, defaultAttributes, keepAttributes);
 	}
-
-	public static long updateDefaultAttributes(Map<String, String> attributes, Path path) throws IOException {
-		final long contentSize = Files.size(path);
-
+	
+	public static Map<String, String> generateDefaultAttributes(final Path path, final long contentSize) throws IOException {
+		final Map<String, String> attributes = new HashMap<>();
+		
 		attributes.put(CoreAttributes.FILENAME.key(), path.getFileName().toString());
 		attributes.put(CoreAttributes.PATH.key(), path.getParent().toString());
 		attributes.put(CoreAttributes.ABSOLUTE_PATH.key(), path.toString());
 		attributes.put(FILE_SIZE_ATTRIBUTE, Long.toString(contentSize));
-
-		return contentSize;
+		
+		return attributes;
 	}
 
 	public static void main(String[] args) {

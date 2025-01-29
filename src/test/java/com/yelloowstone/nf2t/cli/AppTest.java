@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,7 +24,6 @@ public class AppTest {
 
 		final ObjectMapper mapper = new ObjectMapper();
 		final ObjectReader reader = mapper.reader();
-
 	
 		for (int version : versions) {
 			System.out.println("Package V" + version);
@@ -76,6 +74,7 @@ public class AppTest {
 		final int[] versions = new int[] { 3, 2, 1 };
 
 		final ObjectMapper mapper = new ObjectMapper();
+
 		final ObjectReader reader = mapper.reader();
 
 		for (int version : versions) {
@@ -116,8 +115,10 @@ public class AppTest {
 					}
 					
 					for(Path path: paths) {
-						final Map<String, String> attributes = new HashMap<>();
-						long size = App.updateDefaultAttributes(attributes, path);
+						final long size = Files.size(path);
+						final Map<String, String> attributes = App.generateDefaultAttributes(path, size);
+
+						System.out.println("\tPath: " + path);
 						System.out.println("\t" + mapper.writer().writeValueAsString(attributes));
 						try (InputStream in = Files.newInputStream(path)) {
 							packager.packageFlowFile(in, out, attributes, size);
@@ -128,14 +129,14 @@ public class AppTest {
 				}
 
 				final String sw = environment.execute(x -> new String[] {"unpackage", "--version", Integer.toString(version),
-						"--in", packagedPath.toString(), "--out", unpackagedPath.toString()});
+						"--in", packagedPath.toString(), "--out", unpackagedPath.toString(), "--attribute", "key=value"});
 
-				System.out.println("\t" + sw.toString());
+				System.out.println("\tResult:\n\t" + sw.toString());
 				final FlowFileStreamResult result = reader.readValue(sw.toString(), FlowFileStreamResult.class);
 
 				Assert.assertEquals(environment.getExpectedResults(), result.getOutputFiles().size());
 				
-				System.out.println("\t" + mapper.writer().writeValueAsString(environment.getFilePaths()));
+				System.out.println("\tOutputPaths\n\t" + mapper.writer().writeValueAsString(environment.getFilePaths()));
 			}			
 		}
 	}
