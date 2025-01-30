@@ -19,6 +19,7 @@ public class FlowFileStreamResult {
 			+ "it is used to determine whether or not an incoming file is a FlowFileStream of the specified version.";
 	protected static final String EXTENSION_PACKAGE_DESCRIPTION = PACKAGE_DESCRIPTION
 			+ "it will be used to generate the outgoing extension of the specified version.";
+	
 	@JsonPropertyDescription(EXTENSION_DESCRIPTION + EXTENSION_UNPACKAGE_DESCRIPTION + EXTENSION_PACKAGE_DESCRIPTION)
 	@JsonProperty("extension")
 	final private String extension;
@@ -71,7 +72,7 @@ public class FlowFileStreamResult {
 	@JsonProperty("resultsPath")
 	final private Path resultsPath;
 	
-	protected static final String DEFAULT_ATTRIBUTES_DESCRIPTION = "Attributes to set on outgoing FlowFile(s).";
+	protected static final String DEFAULT_ATTRIBUTES_DESCRIPTION = "FlowFile Attribute Key-Value Pairs to set on an outgoing FlowFile(s), where the value is an FlowFile Expressions and resolves against the other attributes.";
 	
 	@JsonPropertyDescription(DEFAULT_ATTRIBUTES_DESCRIPTION)
 	@JsonProperty("defaultAttributes")

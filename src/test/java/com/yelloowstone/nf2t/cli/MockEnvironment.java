@@ -25,6 +25,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.nifi.flowfile.attributes.CoreAttributes;
 import org.apache.nifi.util.FlowFilePackager;
+import org.apache.tika.Tika;
 
 import picocli.CommandLine;
 
@@ -37,8 +38,10 @@ public class MockEnvironment implements AutoCloseable {
 	private final Path contentPath;
 	private final Path packagedPath;
 	private final Path unpackagedPath;
+	private final Tika tika;
 
 	public MockEnvironment(final int version) throws IOException {
+		this.tika = new Tika();
 		this.packageVersions = new FlowFilePackageVersions();
 		this.version = version;
 
@@ -79,6 +82,10 @@ public class MockEnvironment implements AutoCloseable {
 
 	public int getExpectedResults() {
 		return expectedResults;
+	}
+	
+	public Tika getTika() {
+		return tika;
 	}
 
 	public void createExampleContent(final String filename, final String value) throws IOException {

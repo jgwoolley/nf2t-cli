@@ -19,6 +19,7 @@ groupId=$(cat groupId.mvnhelp)
 artifactId=$(cat artifactId.mvnhelp)
 version=$(cat version.mvnhelp)
 
+echo "Deleting Maven Metadata Artifacts"
 rm *.mvnhelp
 
 # Create Variables
@@ -37,13 +38,15 @@ mvn clean install $MVN_ARGS
 mkdir --parents "$artifact_path"
 
 artifact_root_path=$(echo "${artifact_path}" | cut -d '/' -f 1)
+echo "Attempting to delete $artifact_root_path"
 
 # Check if the variable is less than 3
-if [ "$artifact_root_path" -lt 3 ]; then
+if [[ ${#artifact_root_path} -lt 3 ]]; then
   echo "Error: Could not delete ${artifact_root_path}"
   exit 1
 fi
 
+echo "Deleting Artifact Root Path: $artifact_root_path"
 rm -rf "$artifact_root_path"
 mkdir --parents "$artifact_path"
 

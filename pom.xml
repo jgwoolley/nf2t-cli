@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.yelloowstone.nf2t</groupId>
 	<artifactId>nf2t-cli</artifactId>
-	<version>0.0.8-SNAPSHOT</version>
+	<version>0.0.8</version>
 
 	<name>nf2t-cli</name>
 	<description>A Java CLI for parsing Apache NiFi FlowFiles.</description>
@@ -85,6 +85,11 @@
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli-codegen</artifactId>
 			<version>4.7.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-core</artifactId>
+			<version>2.9.2</version>
 		</dependency>
 	</dependencies>
 	<build>

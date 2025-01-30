@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,8 +30,8 @@ import org.apache.nifi.attribute.expression.language.StandardEvaluationContext;
 import org.apache.nifi.flowfile.attributes.CoreAttributes;
 import org.apache.nifi.util.FlowFilePackager;
 import org.apache.nifi.util.FlowFileUnpackager;
+import org.apache.tika.Tika;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.factories.SchemaFactoryWrapper;
@@ -54,10 +55,13 @@ public class App implements Callable<Integer> {
 	private final FlowFilePackageVersions packageVersions;
 	private final ObjectMapper mapper;
 
+	private final Tika tika;
+
 	public App() {
 		super();
 		this.packageVersions = new FlowFilePackageVersions();
 		this.mapper = new ObjectMapper();
+		this.tika = new Tika();
 	}
 
 	private void unpackageFlowFileInputStream(final FlowFileStreamResult result, final InputStream is,
@@ -70,7 +74,8 @@ public class App implements Callable<Integer> {
 			do {
 				final Path contentPath = result.getOutputPath().resolve(UUID.randomUUID().toString() + ".dat");
 				FlowFileResult flowFileResult = null;
-				try (OutputStream out = contentPath == null ? OutputStream.nullOutputStream(): Files.newOutputStream(contentPath)) {
+				try (OutputStream out = contentPath == null ? OutputStream.nullOutputStream()
+						: Files.newOutputStream(contentPath)) {
 					final Map<String, String> attributes = unpackager.unpackageFlowFile(is, out);
 					final long contentSize = Files.size(contentPath);
 					flowFileResult = new FlowFileResult(source, null, attributes, contentSize);
@@ -104,17 +109,18 @@ public class App implements Callable<Integer> {
 			while ((entry = zipIs.getNextEntry()) != null) {
 				final String newAbsolutePath = entry.getName();
 				final String newFilename = new File(entry.getName()).getName();
-				unpackageInputStream(result, zipIs, new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
+				unpackageInputStream(result, zipIs,
+						new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
 			}
 		} catch (Exception e) {
 			errors.add(new FlowFileErrorResult(e, source));
 		}
 	}
-	
+
 	private void unpackageInputStreamGzip(final FlowFileStreamResult result, final InputStream is,
 			final SourceFile source) {
 		final List<FlowFileErrorResult> errors = result.getErrors();
-		
+
 		try (final GzipCompressorInputStream gzipInputStream = new GzipCompressorInputStream(is);
 				final TarArchiveInputStream tarInputStream = new TarArchiveInputStream(gzipInputStream);) {
 			ArchiveEntry entry;
@@ -127,7 +133,8 @@ public class App implements Callable<Integer> {
 				} else {
 					final String newAbsolutePath = entry.getName();
 					final String newFilename = new File(entry.getName()).getName();
-					unpackageInputStream(result, tarInputStream, new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
+					unpackageInputStream(result, tarInputStream,
+							new SourceFile(source, newAbsolutePath, newFilename, entry.getSize()));
 				}
 
 			}
@@ -136,17 +143,17 @@ public class App implements Callable<Integer> {
 			errors.add(new FlowFileErrorResult(e, source));
 		}
 	}
-	
+
 	private void unpackageInputStream(final FlowFileStreamResult result, final InputStream is,
 			final SourceFile source) {
 		final List<FlowFileErrorResult> errors = result.getErrors();
 		final String absolutePath = source.getAbsolutePath();
 
-		if(absolutePath == null) {
+		if (absolutePath == null) {
 			errors.add(new FlowFileErrorResult(new NullPointerException("Given Absolute Path was null."), source));
 			return;
 		}
-		
+
 		if (absolutePath.endsWith(".zip")) {
 			unpackageInputStreamZip(result, is, source);
 			return;
@@ -184,8 +191,10 @@ public class App implements Callable<Integer> {
 					+ FlowFileStreamResult.OUTPUTPATH_UNPACKAGE_DESCRIPTION, required = false) final String outputOption,
 			@Option(names = { "-u",
 					"--uuid" }, description = FlowFileStreamResult.UUID_DESCRIPTION, defaultValue = "true") final boolean uuidFilenames,
-			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath) {
-		final FlowFileStreamResult result = createResult(version, extension, uuidFilenames, inputOption, outputOption, resultsPath, new HashMap<>(), true);
+			@Option(names = { "-r",
+					"--results" }, description = FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath) {
+		final FlowFileStreamResult result = createResult(version, extension, uuidFilenames, inputOption, outputOption,
+				resultsPath, new HashMap<>(), true);
 
 		// Unpack Frequently Used Variables
 		final Path inputPath = result.getInputPath();
@@ -193,12 +202,12 @@ public class App implements Callable<Integer> {
 		final List<FlowFileErrorResult> errors = result.getErrors();
 
 		final SourceFile source = SourceFile.fromPath(null, inputPath);
-		
+
 		// Get Packager For Current Version
 		final FlowFilePackageVersion packageVersion = packageVersions.get(version);
 		if (packageVersion == null) {
-			errors.add(new FlowFileErrorResult(new Exception("Bad FlowFile Package Version Given: " + version),
-					source));
+			errors.add(
+					new FlowFileErrorResult(new Exception("Bad FlowFile Package Version Given: " + version), source));
 			printResult(result);
 			return 1;
 		}
@@ -212,7 +221,7 @@ public class App implements Callable<Integer> {
 				try (final Stream<Path> files = Files.list(inputPath)) {
 					files.forEach(x -> {
 						final SourceFile newSource = SourceFile.fromPath(null, x);
-						try(final InputStream is = Files.newInputStream(x)) {
+						try (final InputStream is = Files.newInputStream(x)) {
 							unpackageInputStream(result, is, newSource);
 						} catch (IOException e) {
 							errors.add(new FlowFileErrorResult(e, newSource));
@@ -222,7 +231,7 @@ public class App implements Callable<Integer> {
 					errors.add(new FlowFileErrorResult(e, source));
 				}
 			} else if (Files.isRegularFile(inputPath)) {
-				try(final InputStream is = Files.newInputStream(inputPath)) {
+				try (final InputStream is = Files.newInputStream(inputPath)) {
 					unpackageInputStream(result, is, source);
 				} catch (IOException e) {
 					errors.add(new FlowFileErrorResult(e, source));
@@ -251,31 +260,34 @@ public class App implements Callable<Integer> {
 					+ FlowFileStreamResult.INPUTPATH_PACKAGE_DESCRIPTION, required = true) final String inputOption,
 			@Option(names = { "-o", "--out" }, description = "The output path."
 					+ FlowFileStreamResult.OUTPUTPATH_PACKAGE_DESCRIPTION, required = true) final String outputOption,
-			@Option(names = {"-r", "--results"}, description=FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath,
-			@Option(names = {"-a", "--attribute"}, description=FlowFileStreamResult.DEFAULT_ATTRIBUTES_DESCRIPTION, required=false) final Map<String,String> rawAttributeExpressions,
-			@Option(names = {"-k", "--keep-attributes"}, description=FlowFileStreamResult.KEEP_ATTRIBUTES_DESCRIPTION, defaultValue="true", required=false) final boolean keepAttributes) {
-		final FlowFileStreamResult result = createResult(version, extension, true, inputOption, outputOption, resultsPath, rawAttributeExpressions == null ? new HashMap<>(): rawAttributeExpressions, keepAttributes);
+			@Option(names = { "-r",
+					"--results" }, description = FlowFileStreamResult.RESULTS_PATH_DESCRIPTION) final String resultsPath,
+			@Option(names = { "-a",
+					"--attribute" }, description = FlowFileStreamResult.DEFAULT_ATTRIBUTES_DESCRIPTION, required = false) final Map<String, String> rawAttributeExpressions,
+			@Option(names = { "-k",
+					"--keep-attributes" }, description = FlowFileStreamResult.KEEP_ATTRIBUTES_DESCRIPTION, defaultValue = "true", required = false) final boolean keepAttributes) {
+		final FlowFileStreamResult result = createResult(version, extension, true, inputOption, outputOption,
+				resultsPath, rawAttributeExpressions == null ? new HashMap<>() : rawAttributeExpressions,
+				keepAttributes);
 
 		// Unpack Frequently Used Variables
 		final Path inputPath = result.getInputPath();
-		
+
 		Path outputPath = result.getOutputPath();
-		
-		if(outputPath == null) {
+
+		if (outputPath == null) {
 			throw new IllegalArgumentException("Output Path must not be empty.");
 		}
-		
+
 		final List<FlowFileErrorResult> errors = result.getErrors();
 
 		final SourceFile source = SourceFile.fromPath(null, inputPath);
-		final SourceFile output = SourceFile.fromPath(null, outputPath);
 
-		
 		// Get Packager For Current Version
 		final FlowFilePackageVersion packageVersion = packageVersions.get(version);
 		if (packageVersion == null) {
-			errors.add(new FlowFileErrorResult(new Exception("Bad FlowFile Package Version Given: " + version),
-					source));
+			errors.add(
+					new FlowFileErrorResult(new Exception("Bad FlowFile Package Version Given: " + version), source));
 			printResult(result);
 			return 1;
 		}
@@ -284,6 +296,8 @@ public class App implements Callable<Integer> {
 			outputPath = packageVersion.getDefaultName(outputPath);
 			result.setOutputPath(outputPath);
 		}
+
+		final SourceFile output = SourceFile.fromPath(null, outputPath);
 
 		final List<Path> contentPaths = new LinkedList<>();
 		if (Files.isRegularFile(inputPath)) {
@@ -308,34 +322,37 @@ public class App implements Callable<Integer> {
 
 		final Map<String, PreparedQuery> attributeExpressions = new HashMap<>();
 
-		for(final Entry<String, String> attribute: result.getDefaultAttributes().entrySet()) {
+		for (final Entry<String, String> attribute : result.getDefaultAttributes().entrySet()) {
 			attributeExpressions.put(attribute.getKey(), Query.prepare(attribute.getValue()));
 		}
-					
+
 		try (OutputStream outputStream = Files.newOutputStream(outputPath)) {
 			for (Path contentPath : contentPaths) {
 				final SourceFile content = SourceFile.fromPath(null, outputPath);
 
 				try {
 					final long contentSize = Files.size(contentPath);
-					final Map<String, String> defaultAttributes = generateDefaultAttributes(contentPath, contentSize);
+					final Map<String, String> defaultAttributes = generateDefaultAttributes(tika, contentPath,
+							contentSize);
 					defaultAttributes.putAll(result.getDefaultAttributes());
 					final Map<String, String> attributes = new HashMap<>();
-					
-					if(result.keepAttributes) {
+
+					if (result.keepAttributes) {
 						attributes.putAll(defaultAttributes);
 					}
-					
-					final StandardEvaluationContext evaluationContext = new StandardEvaluationContext(defaultAttributes);
-					for(final Entry<String,PreparedQuery> attribute: attributeExpressions.entrySet()) {
-						attributes.put(attribute.getKey(), attribute.getValue().evaluateExpressions(evaluationContext, null));
+
+					final StandardEvaluationContext evaluationContext = new StandardEvaluationContext(
+							defaultAttributes);
+					for (final Entry<String, PreparedQuery> attribute : attributeExpressions.entrySet()) {
+						attributes.put(attribute.getKey(),
+								attribute.getValue().evaluateExpressions(evaluationContext, null));
 					}
-										
+
 					try (InputStream inputStream = Files.newInputStream(contentPath)) {
 						packager.packageFlowFile(inputStream, outputStream, attributes, contentSize);
 
-						final FlowFileResult packageResult = new FlowFileResult(output, source,
-								attributes, contentSize);
+						final FlowFileResult packageResult = new FlowFileResult(output, source, attributes,
+								contentSize);
 						result.getOutputFiles().add(packageResult);
 					}
 
@@ -358,13 +375,30 @@ public class App implements Callable<Integer> {
 		return 0;
 	}
 
-	@Command(name = "generateSchema", description = "Generates a JSONSchema for the result of the Unpackage/Package commands.")
-	public Integer generateSchema() throws JsonProcessingException {
+	@Command(name = "gen-schema", description = "Generates a JSONSchema for the result of the Unpackage/Package commands.")
+	public Integer generateSchema(
+			@Option(names = { "-o", "--out" }, description = "The output path.") final String outputOption
+	) throws IOException {
 		SchemaFactoryWrapper visitor = new SchemaFactoryWrapper();
 		mapper.acceptJsonFormatVisitor(FlowFileStreamResult.class, visitor);
 		JsonSchema personSchema = visitor.finalSchema();
-		spec.commandLine().getOut().println(this.mapper.writer().writeValueAsString(personSchema));
-		return 0;
+		String result = this.mapper.writer().writeValueAsString(personSchema);
+		spec.commandLine().getOut().println(result);
+		
+		if(outputOption != null) {
+			Path out = Paths.get(outputOption);
+			if(Files.isDirectory(out)) {
+				out = out.resolve("result.schema.json");
+			}
+
+			if(!Files.isDirectory(out.getParent())) {
+				Files.createDirectories(out.getParent());
+			}
+			
+			Files.write(out, result.getBytes(StandardCharsets.UTF_8));
+		}
+		
+		return 1;
 	}
 
 	@Override
@@ -380,11 +414,11 @@ public class App implements Callable<Integer> {
 		try {
 			String x = this.mapper.writer().writeValueAsString(result);
 			spec.commandLine().getOut().println(x);
-			
-			if(result.getResultsPath() != null) {
+
+			if (result.getResultsPath() != null) {
 				Files.write(result.getResultsPath(), x.getBytes(StandardCharsets.UTF_8));
 			}
-			
+
 		} catch (IOException e) {
 			e.printStackTrace(spec.commandLine().getErr());
 			return true;
@@ -394,33 +428,55 @@ public class App implements Callable<Integer> {
 	}
 
 	public FlowFileStreamResult createResult(final int version, String extension, final boolean uuidFilenames,
-			final String inputOption, String outputOption,  final String resultsOption, final Map<String, String> attributeExpressions, boolean keepAttributes) {
+			final String inputOption, String outputOption, final String resultsOption,
+			final Map<String, String> attributeExpressions, boolean keepAttributes) {
 		final Path inputPath = Paths.get(inputOption == null ? "." : inputOption);
 		final Path outputPath = outputOption == null || outputOption.length() <= 0 ? null : Paths.get(outputOption);
 		Path resultsPath = resultsOption == null ? null : Paths.get(resultsOption);
-		
+
 		if (extension.length() <= 0) {
 			extension = packageVersions.get(version).getFileExtension();
 		}
 
-		if(resultsPath != null && Files.isDirectory(resultsPath)) {
+		if (resultsPath != null && Files.isDirectory(resultsPath)) {
 			resultsPath = resultsPath.resolve("results.json");
 		}
-		
+
 		long unixTime = System.currentTimeMillis() / 1000L;
-		return new FlowFileStreamResult(version, extension, uuidFilenames, inputPath, outputPath, resultsPath, unixTime, attributeExpressions, keepAttributes);
+		return new FlowFileStreamResult(version, extension, uuidFilenames, inputPath, outputPath, resultsPath, unixTime,
+				attributeExpressions, keepAttributes);
 	}
-	
-	public static Map<String, String> generateDefaultAttributes(final Path path, final long contentSize) throws IOException {
+
+	public static Map<String, String> generateDefaultAttributes(Tika tika, final Path path, final long contentSize)
+			throws IOException {
 		final Map<String, String> attributes = new HashMap<>();
-		
+
+		try {
+			final String mimeType = tika.detect(path);
+			if (mimeType != null) {
+				attributes.put(CoreAttributes.MIME_TYPE.key(), mimeType);
+			}
+
+		} catch (Exception e) {
+
+		}
+
 		attributes.put(CoreAttributes.FILENAME.key(), path.getFileName().toString());
-		if(path.getParent() != null) {
+		if (path.getParent() != null) {
 			attributes.put(CoreAttributes.PATH.key(), path.getParent().toString());
 		}
 		attributes.put(CoreAttributes.ABSOLUTE_PATH.key(), path.toString());
 		attributes.put(FILE_SIZE_ATTRIBUTE, Long.toString(contentSize));
-		
+
+		try {
+			final BasicFileAttributes fileAttributes = Files.readAttributes(path, BasicFileAttributes.class);
+			attributes.put("lastAccessTime", fileAttributes.lastAccessTime().toString());
+			attributes.put("creationTime", fileAttributes.creationTime().toString());
+			attributes.put("lastModifiedTime", fileAttributes.lastModifiedTime().toString());
+		} catch (Exception e) {
+
+		}
+
 		return attributes;
 	}
 

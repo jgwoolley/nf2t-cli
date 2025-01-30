@@ -116,7 +116,7 @@ public class AppTest {
 					
 					for(Path path: paths) {
 						final long size = Files.size(path);
-						final Map<String, String> attributes = App.generateDefaultAttributes(path, size);
+						final Map<String, String> attributes = App.generateDefaultAttributes(environment.getTika(), path, size);
 
 						System.out.println("\tPath: " + path);
 						System.out.println("\t" + mapper.writer().writeValueAsString(attributes));
