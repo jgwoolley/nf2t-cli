@@ -8,6 +8,9 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * @author 26191568+jgwoolley@users.noreply.github.com
+ */
 public class SourceFile {
 	@JsonProperty("parent")
 	private final SourceFile parent;
@@ -23,6 +26,7 @@ public class SourceFile {
 	
 	@JsonProperty("uuid")
 	private final UUID uuid;
+	
 	@JsonCreator
 	public SourceFile(@JsonProperty("parent") SourceFile parent, @JsonProperty("absolutePath") String absolutePath, @JsonProperty("filename") String filename, @JsonProperty("size") long size, @JsonProperty("uuid") UUID uuid) {
 		this.parent = parent;
@@ -66,7 +70,6 @@ public class SourceFile {
 	public UUID getUuid() {
 		return uuid;
 	}
-	
 	
 	public static SourceFile fromPath(SourceFile parent, Path inputPath) {
 		final String absolutePath = inputPath.toAbsolutePath().toString();

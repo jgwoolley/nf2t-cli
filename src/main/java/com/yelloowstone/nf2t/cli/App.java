@@ -398,7 +398,7 @@ public class App implements Callable<Integer> {
 			Files.write(out, result.getBytes(StandardCharsets.UTF_8));
 		}
 		
-		return 1;
+		return 0;
 	}
 
 	@Override

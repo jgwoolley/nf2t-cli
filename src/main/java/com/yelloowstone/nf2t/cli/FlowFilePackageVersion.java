@@ -6,14 +6,18 @@ import java.util.function.Supplier;
 import org.apache.nifi.util.FlowFilePackager;
 import org.apache.nifi.util.FlowFileUnpackager;
 
+/**
+ * @author 26191568+jgwoolley@users.noreply.github.com Represents a version of a
+ *         FlowFile Packager.
+ */
 public class FlowFilePackageVersion {
 	private final String mimetype;
 	private final String fileExtension;
 	private final Supplier<FlowFileUnpackager> unpackager;
 	private final Supplier<FlowFilePackager> packager;
-	
-	public FlowFilePackageVersion(String mimetype, String fileExtension,
-			Supplier<FlowFileUnpackager> unpackager, Supplier<FlowFilePackager> packager) {
+
+	public FlowFilePackageVersion(String mimetype, String fileExtension, Supplier<FlowFileUnpackager> unpackager,
+			Supplier<FlowFilePackager> packager) {
 		this.mimetype = mimetype;
 		this.fileExtension = fileExtension;
 		this.unpackager = unpackager;
@@ -35,9 +39,9 @@ public class FlowFilePackageVersion {
 	public FlowFilePackager getPackager() {
 		return packager.get();
 	}
-	
+
 	public Path getDefaultName(Path parent) {
 		return parent.resolve("data" + fileExtension);
-		
+
 	}
 }
