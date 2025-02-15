@@ -47,6 +47,7 @@ jobs:
 
     - name: Build Project
       run: bash build.sh
+      working-directory: nf2t-cli     
       working-directory: nf2t-cli
     - name: Install Asciidoc
       run: sudo apt-get install -y asciidoctor 
