@@ -1,5 +1,7 @@
 rm -rf ~/.m2/repository/
 
+cd ./nf2t-cli
+
 repoUrl=https://repo1.maven.org/maven2/
 groupId=com.yelloowstone.nf2t
 artifactId=nf2t-cli

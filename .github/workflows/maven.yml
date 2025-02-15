@@ -47,17 +47,19 @@ jobs:
 
     - name: Build Project
       run: bash build.sh
+      working-directory: nf2t-cli
     - name: Install Asciidoc
       run: sudo apt-get install -y asciidoctor 
     - name: Build Docs
-      run: bash docs.sh     
+      run: bash docs.sh
+      working-directory: nf2t-cli     
     - name: Setup Pages
       uses: actions/configure-pages@v3
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
         # Upload public repository
-        path: './dist'
+        path: './nf2t-cli/dist'
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4

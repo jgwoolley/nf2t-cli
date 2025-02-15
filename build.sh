@@ -1,5 +1,7 @@
 set -e
 
+cd ./nf2t-cli
+
 # Configuration
 GPG_USER="0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73"
 

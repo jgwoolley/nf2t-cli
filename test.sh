@@ -1,5 +1,7 @@
 set -e
 
+cd ./nf2t-cli
+
 # Evaluate Maven Coordinates
 
 mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp

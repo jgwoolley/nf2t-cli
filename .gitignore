@@ -4,9 +4,11 @@
 .classpath
 .project
 .settings/
-/dependency-reduced-pom.xml
-/target/
+dependency-reduced-pom.xml
+target/
 /maven.zip
 /com/
 /dist/
 /quick_test/
+nf2t-cli/dist/
+nf2t-cli/maven.zip
