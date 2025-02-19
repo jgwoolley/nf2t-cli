@@ -4,9 +4,9 @@ cd ./nf2t-cli
 
 # Evaluate Maven Coordinates
 
-mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp
-mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp
-mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp
+mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp --quiet
+mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp --quiet
+mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp --quiet
 git log -1 --pretty=format:'%H' >> gitHash.mvnhelp
 
 groupId=$(cat groupId.mvnhelp)

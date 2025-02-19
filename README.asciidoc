@@ -57,7 +57,7 @@ I've developed several versions of this project over the years, and created a We
 * link:./test.sh[test.sh]: After running the build script, will test the executable jar.
 
 == TODO
-
+* link:https://gist.github.com/timbuethe/7becdc4556225e7c5b7b[]
 * In the link:test.sh[] example the FlowFile path is "./quick_test//2/data.flowfilev3" which the /2/data.flowfilev3 seems to be refering to the path in the ZIP file.
 * Can pass variables with asciidoc link:https://stackoverflow.com/questions/63622953/asciidoctor-activate-substitution-in-cli-attributes[]
 * Remove concept of version as provided by CLI arg, or make version and prefix additional options for configuring how FlowFileStream(s) are parsed.

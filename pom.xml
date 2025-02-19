@@ -5,39 +5,33 @@
   <artifactId>nf2t-parent</artifactId>
   <version>0.0.9-SNAPSHOT</version>
   <name>NiFi FlowFile Tools Parent POM</name>
-
-	<description>A Java CLI for parsing Apache NiFi FlowFiles.</description>
-	<url>https://github.com/jgwoolley/nf2t-cli</url>
-
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		</license>
-	</licenses>
-
-	<developers>
-		<developer>
-			<name>James Woolley</name>
-			<email>26191568+jgwoolley@users.noreply.github.com</email>
-			<organization>Yelloowstone.com</organization>
-			<organizationUrl>http://www.yelloowstone.com</organizationUrl>
-		</developer>
-	</developers>
-
-	<scm>
-		<connection>scm:git:git://github.com/jgwoolley/nf2t-cli.git</connection>
-		<developerConnection>
+  <description>A Java CLI for parsing Apache NiFi FlowFiles.</description>
+  <url>https://github.com/jgwoolley/nf2t-cli</url>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>James Woolley</name>
+      <email>26191568+jgwoolley@users.noreply.github.com</email>
+      <organization>Yelloowstone.com</organization>
+      <organizationUrl>http://www.yelloowstone.com</organizationUrl>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git://github.com/jgwoolley/nf2t-cli.git</connection>
+    <developerConnection>
 			scm:git:ssh://github.com:jgwoolley/nf2t-cli.git</developerConnection>
-		<url>http://github.com/jgwoolley/nf2t-cli/tree/master</url>
-	</scm>
-
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-	</properties>
-
+    <url>http://github.com/jgwoolley/nf2t-cli/tree/master</url>
+  </scm>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -47,8 +41,8 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
   <modules>
     <module>nf2t-cli</module>
+    <module>nf2t-javafx</module>
   </modules>
 </project>

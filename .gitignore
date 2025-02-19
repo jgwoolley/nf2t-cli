@@ -12,3 +12,5 @@ target/
 /quick_test/
 nf2t-cli/dist/
 nf2t-cli/maven.zip
+nf2t-cli/com
+bin
