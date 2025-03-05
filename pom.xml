@@ -47,6 +47,5 @@
 	<modules>
 		<module>build-maven-central-zip</module>
 		<module>nf2t-cli</module>
-		<module>nf2t-javafx</module>
 	</modules>
 </project>
