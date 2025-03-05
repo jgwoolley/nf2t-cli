@@ -39,6 +39,16 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.freemarker</groupId>
+			<artifactId>freemarker-gae</artifactId>
+			<version>2.3.34</version>
+		</dependency>
+		<dependency>
+			<groupId>org.asciidoctor</groupId>
+			<artifactId>asciidoctorj</artifactId>
+			<version>2.5.11</version>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
@@ -88,7 +98,8 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>com.yelloowstone.nf2t.mavenCentralCli.App</mainClass>
+									<mainClass>
+										com.yelloowstone.nf2t.mavenCentralCli.App</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>

@@ -59,10 +59,6 @@ public class MavenArtifact {
 		sb.append(this.getVersion());
 		sb.append("/");
 		
-//		if(postfix != null) {
-//			sb.append(this.getFileName(postfix));
-//		}
-		
 		return sb.toString();
 	}
 	

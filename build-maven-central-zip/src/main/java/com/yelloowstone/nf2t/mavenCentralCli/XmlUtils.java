@@ -8,7 +8,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class XmlUtils {
-	public static Element getChildByTagName(Element parentElement, String tagName) {
+	public static Element getChildByTagName(final Element parentElement,final String tagName) {
         final NodeList children = parentElement.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
         	final Node node = children.item(i);
@@ -19,7 +19,7 @@ public class XmlUtils {
         return null;
     }
 	
-	public static String getTextContentByTagName(Element parentElement, String tagName) {
+	public static String getTextContentByTagName(final Element parentElement, final String tagName) {
 		Element element = getChildByTagName(parentElement, tagName);
 		if(element == null) {
 			return null;
@@ -32,7 +32,7 @@ public class XmlUtils {
 		return textContent.strip();
 	}
 	
-	public static String getTextContentByTagNameWithDefault(Element parentElement, String defaultTag, String tagName) {
+	public static String getTextContentByTagNameWithDefault(final Element parentElement, final String defaultTag, final String tagName) {
 		final String localValue = getTextContentByTagName(parentElement, tagName);
 		if(localValue != null) {
 			return localValue;
@@ -51,6 +51,11 @@ public class XmlUtils {
 	}
 	
 	public static MavenArtifact readMavenArtifact(final Element element) {
+		if(element == null) {
+			System.err.println("Unable to read Maven artifact. Given empty Element.");
+			return null;
+		}
+		
 		final String groupId = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "groupId");
         final String artifactId = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "artifactId");
         final String version = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "version");

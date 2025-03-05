@@ -1,0 +1,5 @@
+= README
+
+== TODO
+. Seperate subcomponets into their own thing.
+. The documentation generator should generate one zip for all specified files.
