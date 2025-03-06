@@ -40,29 +40,27 @@ import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
 
 @Command(name = "Build Maven Central Zip")
 public class App implements Callable<Integer> {
 
-	final DocumentBuilderFactory dbFactory;
-	final DocumentBuilder dBuilder;
+	@Spec
+	private CommandSpec spec;
+		
+	private final DocumentBuilderFactory dbFactory;
+	private final DocumentBuilder dBuilder;
 
-	@Parameters(description = "A path of a Maven Project.", defaultValue = ".")
-	private Path[] inputPaths;
-
-	@Option(description = "The local GPG user that will be fed into GPG command.", required = false, names = {
-			"--gpgUser", "-u" })
-	private String gpgUser;
-
-	public App() throws ParserConfigurationException {
+	public App() throws ParserConfigurationException, IOException {
 		super();
 		this.dbFactory = DocumentBuilderFactory.newInstance();
 		this.dBuilder = dbFactory.newDocumentBuilder();
 	}
 
-	private Integer signArtifact(MavenArtifact artifact, ZipOutputStream zos, Path artifactPath) throws IOException {
+	private Integer signArtifact(String gpgUser, MavenArtifact artifact, ZipOutputStream zos, Path artifactPath) throws IOException {
 		final String zipEntryName = artifact.getZipEntryName();
 		final String fileName = artifactPath.getFileName().toString();
 
@@ -100,6 +98,43 @@ public class App implements Callable<Integer> {
 		return 0;
 	}
 
+	private String createGitHash(Path path) {		
+		try {
+			final ProcessBuilder builder = new ProcessBuilder("git", "log","-1","--pretty=format:'%H'"); 
+			builder.directory(path.toFile());
+			final Process process = builder.start();
+
+			// Capture stdout
+            final BufferedReader standardOutReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String s;
+            final StringBuilder standardOut = new StringBuilder();
+            while ((s = standardOutReader.readLine()) != null) {
+            	standardOut.append(s);
+            }
+
+            // Capture stderr
+            final BufferedReader standardErrorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            final StringBuilder standardError = new StringBuilder();
+            while ((s = standardErrorReader.readLine()) != null) {
+            	standardError.append(s);
+            }
+            
+            
+            final int exitCode = process.waitFor();
+            if(exitCode == 0){
+            	return standardOut.toString().replace("\'", "");
+            }        else {
+    			System.err.println("Could not execute git command.");
+            }
+
+		} catch (Exception e) {
+			System.err.println("Could not execute git command.");
+			e.printStackTrace();
+		}		
+		
+		return null;
+	}
+	
 	private MavenArtifact createEffectivePom(Path projectPath) {
 		final Path targetPath = projectPath.resolve("target");
 		if (!Files.isDirectory(targetPath)) {
@@ -143,7 +178,7 @@ public class App implements Callable<Integer> {
 		if (artifact != null) {
 			try {
 				final Path newArtifactPath = targetPath.resolve(artifact.getFileName(".pom"));
-				Files.delete(newArtifactPath);
+				Files.deleteIfExists(newArtifactPath);
 				Files.move(artifactPath, newArtifactPath);
 			} catch (Exception e) {
 				System.err.println("Could not move pom file: " + artifactPath);
@@ -155,12 +190,12 @@ public class App implements Callable<Integer> {
 		return artifact;
 	}
 
-	private Integer packageArtifact(final Path artifactPath, final ZipOutputStream zos, final MavenArtifact artifact)
+	private Integer packageArtifact(final String gpgUser, final Path artifactPath, final ZipOutputStream zos, final MavenArtifact artifact)
 			throws SAXException, IOException {
 		final String zipEntryName = artifact.getZipEntryName();
 		final String fileName = artifactPath.getFileName().toString();
 
-		final int signArtifactResult = signArtifact(artifact, zos, artifactPath);
+		final int signArtifactResult = signArtifact(gpgUser, artifact, zos, artifactPath);
 		if (signArtifactResult != 0) {
 			return signArtifactResult;
 		}
@@ -240,7 +275,7 @@ public class App implements Callable<Integer> {
 		}
 	}
 
-	private Integer buildManPage(final Configuration configuration, final Path projectPath, final MavenArtifact artifact, final ZipOutputStream zos) {
+	private Integer buildManPage(final Configuration configuration, final Path projectPath, final String gitHash, final MavenArtifact artifact, final ZipOutputStream zos) {
 		final Path targetPath = projectPath.resolve("target");
 		if (!Files.isDirectory(targetPath)) {
 			System.err.println("Path must be a directory: " + targetPath);
@@ -309,7 +344,7 @@ public class App implements Callable<Integer> {
 				}
 			}
 
-			final Map<String,Object> data = generateDataModel(artifact);
+			final Map<String,Object> data = generateDataModel(artifact, gitHash);
 			data.put("manPaths", manPaths.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 			
 			try (final StringWriter stringWriter = new StringWriter();
@@ -376,48 +411,6 @@ public class App implements Callable<Integer> {
 		return 0;
 	}
 
-	private Integer buildDocs(final Path projectPath, final MavenArtifact artifact) {
-		final Path targetPath = projectPath.resolve("target");
-		if (!Files.isDirectory(targetPath)) {
-			System.err.println("Path must be a directory: " + targetPath);
-			return 1;
-		}
-
-		final Path outPath = targetPath.resolve(artifact.getFileName(".docs.zip"));
-		if (Files.isRegularFile(outPath)) {
-			try {
-				Files.delete(outPath);
-			} catch (IOException e) {
-				System.err.println("Could not delete file: " + outPath);
-				e.printStackTrace();
-				return 1;
-			}
-		}
-		
-		try (final OutputStream fos = Files.newOutputStream(outPath);
-				final ZipOutputStream zos = new ZipOutputStream(fos);) {
-			final Configuration configuration = this.generateConfiguration();
-			
-			int buildIndexResult = buildIndex(configuration, projectPath, artifact, zos);
-			if (buildIndexResult != 0)
-				return buildIndexResult;
-			int buildManPageResult = buildManPage(configuration, projectPath, artifact, zos);
-			if (buildManPageResult != 0)
-				return buildIndexResult;
-			int buildJavaDocsResult = buildJavaDocs(projectPath, artifact, zos);
-			if (buildJavaDocsResult != 0)
-				return buildIndexResult;
-		} catch (Exception e) {
-			System.err.println("Error in creating Documentation ZIP: " + outPath);
-			e.printStackTrace();
-			return 1;
-		} finally {
-			System.out.println(ConsoleColors.GREEN + "Documentation Zip generated at " + outPath + ConsoleColors.RESET);
-		}
-
-		return 0;
-	}
-
 	public static String loadResourceAsString(String resourcePath) throws IOException {
 		ClassLoader classLoader = App.class.getClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream(resourcePath);
@@ -436,7 +429,7 @@ public class App implements Callable<Integer> {
 		return content.toString();
 	}
 
-	private Configuration generateConfiguration() throws IOException {
+	private static Configuration generateConfiguration() throws IOException {
 		final Path templateDirPath = Files.createTempDirectory("templateDir");
 		for (String templateName : new String[] { "root.ftl", "man.ftl" }) {
 			String content = loadResourceAsString("templates/" + templateName);
@@ -456,22 +449,24 @@ public class App implements Callable<Integer> {
 		return cfg;
 	}
 	
-	private Map<String,Object> generateDataModel(final MavenArtifact artifact) {
+	private Map<String,Object> generateDataModel(final MavenArtifact artifact, final String gitHash) {
 		// Create data model
 		final Map<String, Object> data = new HashMap<>();
+		data.put("name", artifact.getName());
 		data.put("artifactId", artifact.getArtifactId());
 		data.put("groupId", artifact.getGroupId());
 		data.put("version", artifact.getVersion());
 		data.put("buildTime", Instant.now().toString());
+		data.put("gitHash", gitHash);
 		
 		return data;
 	}
 	
-	private int buildIndex(final Configuration configuration, final Path projectPath, final MavenArtifact artifact, final ZipOutputStream zos) {
+	private int buildIndex(final Configuration configuration, final Path projectPath, final String gitHash, final MavenArtifact artifact, final ZipOutputStream zos) {
 
 		try {
 			
-			final Map<String,Object> data = generateDataModel(artifact);
+			final Map<String,Object> data = generateDataModel(artifact, gitHash);
 			
 			try (final StringWriter stringWriter = new StringWriter();
 					java.io.Writer fileWriter = new java.io.BufferedWriter(stringWriter);) {
@@ -491,7 +486,7 @@ public class App implements Callable<Integer> {
 		return 0;
 	}
 
-	private Integer packageProject(final Path projectPath, final ZipOutputStream zos, final MavenArtifact artifact) {
+	private Integer packageProject(final String gpgUser, final Path projectPath, final ZipOutputStream zos, final MavenArtifact artifact) {
 		final Path targetPath = projectPath.resolve("target");
 		if (!Files.isDirectory(targetPath)) {
 			System.err.println("Path must be a directory: " + targetPath);
@@ -517,7 +512,7 @@ public class App implements Callable<Integer> {
 			zos.closeEntry();
 
 			for (final Path artifactPath : artifactPaths) {
-				final int parseArtifactResult = packageArtifact(artifactPath, zos, artifact);
+				final int parseArtifactResult = packageArtifact(gpgUser, artifactPath, zos, artifact);
 				if (parseArtifactResult != 0) {
 					return parseArtifactResult;
 				}
@@ -531,8 +526,8 @@ public class App implements Callable<Integer> {
 		return 0;
 	}
 
-	private Integer packageProject(final Path projectPath) {
-		if (this.gpgUser == null) {
+	private Integer packageMavenCentral(final String gpgUser, final Path projectPath) {
+		if (gpgUser == null) {
 			System.err.println("GPG User not specified. This will result in an invalid Maven Central ZIP.");
 		}
 
@@ -550,7 +545,7 @@ public class App implements Callable<Integer> {
 		final Path outPath = targetPath.resolve(artifact.getFileName(".maven.zip"));
 		if (Files.isRegularFile(outPath)) {
 			try {
-				Files.delete(outPath);
+				Files.deleteIfExists(outPath);
 			} catch (IOException e) {
 				System.err.println("Could not delete file: " + outPath);
 				e.printStackTrace();
@@ -558,15 +553,9 @@ public class App implements Callable<Integer> {
 			}
 		}
 
-		// TODO: Separate into its own subcommand.
-		final int buildManPageResult = buildDocs(projectPath, artifact);
-		if (buildManPageResult != 0) {
-			return buildManPageResult;
-		}
-
 		try (final OutputStream fos = Files.newOutputStream(outPath);
 				final ZipOutputStream zos = new ZipOutputStream(fos);) {
-			return packageProject(projectPath, zos, artifact);
+			return packageProject(gpgUser, projectPath, zos, artifact);
 		} catch (Exception e) {
 			System.err.println("Error in creating ZIP: " + outPath);
 			e.printStackTrace();
@@ -576,20 +565,92 @@ public class App implements Callable<Integer> {
 					+ artifact.getCoordinate() + ConsoleColors.RESET);
 		}
 	}
-
-	@Override
-	public Integer call() throws Exception {
+	
+	@Command(name = "mavenCentral", description = "Packages Maven packages meant for the Maven Central Repository.")
+	public Integer packageMavenCentral(@Parameters(description = "A path of a Maven Project.", defaultValue = ".")
+	Path[] inputPaths, @Option(names = { "--gpgUser", "-u" }, required = false, description = {
+			"The local GPG user that will be fed into GPG command." }) final String gpgUser) {
 		for (final Path projectPath : inputPaths) {
-			final int returnCode = packageProject(projectPath);
+			final int returnCode = packageMavenCentral(gpgUser, projectPath);
 			if (returnCode != 0) {
 				return returnCode;
 			}
 		}
+		return 0;
+	}
+	
+	public Integer packageDocumentation(String gitHash, Path projectPath) {
+		final Path targetPath = projectPath.resolve("target");
+		if (!Files.isDirectory(targetPath)) {
+			System.err.println("Path must be a directory: " + targetPath);
+			return 1;
+		}
+
+		final MavenArtifact artifact = createEffectivePom(projectPath);
+		if (artifact == null) {
+			return 1;
+		}
+
+		final Path outPath = targetPath.resolve(artifact.getFileName(".docs.zip"));
+		if (Files.isRegularFile(outPath)) {
+			try {
+				Files.deleteIfExists(outPath);
+			} catch (IOException e) {
+				System.err.println("Could not delete file: " + outPath);
+				e.printStackTrace();
+				return 1;
+			}
+		}
+		
+		try (final OutputStream fos = Files.newOutputStream(outPath);
+				final ZipOutputStream zos = new ZipOutputStream(fos);) {
+			final Configuration configuration = generateConfiguration();
+			
+			int buildIndexResult = buildIndex(configuration, projectPath, gitHash, artifact, zos);
+			if (buildIndexResult != 0)
+				return buildIndexResult;
+			int buildManPageResult = buildManPage(configuration, projectPath, gitHash, artifact, zos);
+			if (buildManPageResult != 0)
+				return buildIndexResult;
+			int buildJavaDocsResult = buildJavaDocs(projectPath, artifact, zos);
+			if (buildJavaDocsResult != 0)
+				return buildIndexResult;
+		} catch (Exception e) {
+			System.err.println("Error in creating Documentation ZIP: " + outPath);
+			e.printStackTrace();
+			return 1;
+		} finally {
+			System.out.println(ConsoleColors.GREEN + "Documentation Zip generated at " + outPath + ConsoleColors.RESET);
+		}
 
 		return 0;
 	}
+	
+	@Command(name = "docs", description = "Packages documentation, including ManPages, and JavaDocs.")
+	public Integer packageDocumentation(@Parameters(description = "A path of a Maven Project.", defaultValue = ".")
+	Path[] inputPaths) {
+		String gitHash = createGitHash(inputPaths[0]);
+		if(gitHash == null) {
+			System.err.println("Unable to find Git hash");
+			return 1;
+		}
+		
+		for (final Path projectPath : inputPaths) {
+			final int returnCode = packageDocumentation(gitHash, projectPath);
+			if (returnCode != 0) {
+				return returnCode;
+			}
+		}
+		return 0;
+	}
+	
+	@Override
+	public Integer call() throws Exception {
+//		return packageMavenCentral(new Path[] { Path.of(".") }, null );
+		return packageDocumentation(new Path[] { Path.of(".") });
+	}
 
-	public static void main(String[] args) throws ParserConfigurationException {
+	public static void main(String[] args) throws ParserConfigurationException, IOException {
 		int rc = new CommandLine(new App()).execute(args);
 		System.exit(rc);
 	}

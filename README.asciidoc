@@ -57,6 +57,8 @@ I've developed several versions of this project over the years, and created a We
 * link:./test.sh[test.sh]: After running the build script, will test the executable jar.
 
 == TODO
+* https://picocli.info/autocomplete.html
+** java -cp nf2t-cli-0.0.9-SNAPSHOT.jar picocli.AutoComplete -n nf2t com.yelloowstone.nf2t.cli.App
 * Add SLF4J Logging
 * Remove Ruby asciidoc dependency in favor of java based sollution.
 * link:https://gist.github.com/timbuethe/7becdc4556225e7c5b7b[]

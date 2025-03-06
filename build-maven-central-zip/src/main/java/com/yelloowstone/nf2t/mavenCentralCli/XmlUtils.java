@@ -60,9 +60,13 @@ public class XmlUtils {
         final String artifactId = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "artifactId");
         final String version = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "version");
         final String packaging = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "packaging", "jar");
+        String name = XmlUtils.getTextContentByTagName(element, "name");
+        if(name == null) {
+        	name = artifactId;
+        }
         final List<String> modules = new ArrayList<>();
         
-        final MavenArtifact artifact = new MavenArtifact(groupId, artifactId, version, packaging, modules);
+        final MavenArtifact artifact = new MavenArtifact(groupId, artifactId, version, packaging, name, modules);
         
         NodeList modulesNodeList = element.getElementsByTagName("modules");
 		

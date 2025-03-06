@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>${artifactId} ManPage</title>
+        <title>${name} ManPage</title>
         <style>
             table, th, td {
                 border: 2px solid black; 
