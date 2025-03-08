@@ -150,12 +150,13 @@ public class App implements Callable<Integer> {
 
 		final List<Path> artifactPaths = new ArrayList<>();
 
-		for (final String postfix : new String[] { ".jar", "-javadoc.jar", "-sources.jar", ".pom" }) {
-			final Path artifactPath = targetPath.resolve(artifact.getFileName(postfix));
+		for (final Entry<String, String> entry : artifact.getMavenCentralArtifactNames().entrySet()) {
+			final String artifactName = entry.getValue();
+			final Path artifactPath = targetPath.resolve(artifactName);
 			artifactPaths.add(artifactPath);
 			if (!Files.isRegularFile(artifactPath)) {
 				System.err.println(
-						"Could not find required artifact. Consult with pom.xml file to determine why this file was not created. "
+						"Could not find required artifact ("+entry.getKey()+"). Consult with pom.xml file to determine why this file was not created. "
 								+ artifactPath);
 				return 0;
 			}
@@ -197,7 +198,7 @@ public class App implements Callable<Integer> {
 			return 1;
 		}
 
-		final Path outPath = targetPath.resolve(artifact.getFileName(".maven.zip"));
+		final Path outPath = targetPath.resolve(artifact.getMavenCentralArtifactName());
 		if (Files.isRegularFile(outPath)) {
 			try {
 				Files.deleteIfExists(outPath);

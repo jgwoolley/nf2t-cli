@@ -1,6 +1,7 @@
 package com.yelloowstone.nf2t.mavenCentralCli;
 
 import java.util.List;
+import java.util.Map;
 
 public class MavenArtifact {
 	private final String groupId;
@@ -78,26 +79,6 @@ public class MavenArtifact {
 		return sb.toString();
 	}
 
-	public String getDocumentationZipEntryPrefix(String filename) {
-		return "/" + getArtifactId() + "/" + filename;
-	}
-
-	public String getDocumentationManPageZipEntryPrefix(String filename) {		
-		return getDocumentationManPageZipEntryPrefix() + filename;
-	}
-	
-	public String getDocumentationManPageZipEntryPrefix() {
-		return getDocumentationZipEntryPrefix("man/");
-	}
-
-	public String getDocumentationJavaDocZipEntryPrefix(String filename) {
-		return getDocumentationJavaDocZipEntryPrefix() + filename;
-	}
-	
-	public String getDocumentationJavaDocZipEntryPrefix() {
-		return getDocumentationZipEntryPrefix("javadoc/");
-	}
-
 	public String getJarFileName() {
 		return getFileName(".jar");
 	};
@@ -113,5 +94,14 @@ public class MavenArtifact {
 	public String getEffectivePomFileName() {
 		return getFileName(".pom");
 	};
+	
+	public Map<String, String> getMavenCentralArtifactNames() {
+		return Map.of("Jar", getJarFileName(), "JavaDoc", getJavaDocFileName(), "Source", getSourcesFileName(), "Pom", getEffectivePomFileName());
+	}
+		
+	
+	public String getMavenCentralArtifactName() {
+		return getFileName(".maven.zip");
+	}
 
 }

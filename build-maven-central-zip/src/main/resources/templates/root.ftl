@@ -23,9 +23,9 @@
             <tbody>
             	<#list mavenProjects as mavenProject>
             	<tr>
-                    <td><a href=".${mavenProject.getDocumentationZipEntryPrefix("index.html")}">${mavenProject.getProjectName()}</a></td>
-                    <td><a href=".${mavenProject.getDocumentationJavaDocZipEntryPrefix("index.html")}">JavaDocs Page</a></td>
-                    <td><a href=".${mavenProject.getDocumentationManPageZipEntryPrefix("index.html")}">Man Page</a></td>
+                    <td><a href="./${mavenProject.getMavenArtifact().getArtifactId()}/index.html">${mavenProject.getProjectName()}</a></td>
+                    <td><a href="./${mavenProject.getMavenArtifact().getArtifactId()}/javadoc/index.html">JavaDocs Page</a></td>
+                    <td><a href="./${mavenProject.getMavenArtifact().getArtifactId()}/man/index.html">Man Page</a></td>
                 </tr>
 			  </#list>
             </tbody>

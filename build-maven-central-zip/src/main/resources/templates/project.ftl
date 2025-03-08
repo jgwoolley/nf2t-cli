@@ -29,6 +29,10 @@
                     <td>${mavenProject.getBuildTime()}</td>
                 </tr>
                 <tr>
+				  	<td>Maven Coordinate</td>
+				  	<td>${mavenProject.getMavenArtifact().getCoordinate()}</td>  	
+			  	</tr>
+                <tr>
                     <td>Git Hash</td>
                     <td>${mavenProject.getGitHash()}</td>
                 </tr>
@@ -52,6 +56,17 @@
                 	<td>ManPages</td>
                 	<td><a href="./man/index.html">./man/index.html</a></td>
                 </tr>
+                <tbody>
+                <#list mavenProject.getMavenArtifact().getMavenCentralArtifactNames()?keys as key>
+                <tr>
+				    <td>${key} Artifact</td>
+                    <td><a href="./artifacts/${mavenProject.getMavenArtifact().getMavenCentralArtifactNames()[key]}">${mavenProject.getMavenArtifact().getMavenCentralArtifactNames()[key]}</a></td>
+                    </tr>
+				</#list>    
+			  	<tr>
+			  		<td>Maven Central Zip</td>
+			  		<td><a href="./artifacts/${mavenProject.getMavenArtifact().getMavenCentralArtifactName()}">${mavenProject.getMavenArtifact().getMavenCentralArtifactName()}</a></td>
+			  	</tr>			  			  
             </tbody>
         </table>
     </body>

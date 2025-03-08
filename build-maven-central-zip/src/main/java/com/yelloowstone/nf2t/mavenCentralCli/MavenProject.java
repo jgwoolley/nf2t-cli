@@ -28,26 +28,6 @@ public class MavenProject {
 		return projectPath;
 	}
 
-	public String getDocumentationZipEntryPrefix(String filename) {
-		return getMavenArtifact().getDocumentationZipEntryPrefix(filename);
-	}
-
-	public String getDocumentationManPageZipEntryPrefix(String filename) {		
-		return getMavenArtifact().getDocumentationManPageZipEntryPrefix(filename);
-	}
-	
-	public String getDocumentationManPageZipEntryPrefix() {
-		return getMavenArtifact().getDocumentationManPageZipEntryPrefix();
-	}
-
-	public String getDocumentationJavaDocZipEntryPrefix(String filename) {
-		return getMavenArtifact().getDocumentationJavaDocZipEntryPrefix(filename);
-	}
-	
-	public String getDocumentationJavaDocZipEntryPrefix() {
-		return getMavenArtifact().getDocumentationJavaDocZipEntryPrefix();
-	}
-
 	public String getProjectName() {
 		return getMavenArtifact().getName();
 	}

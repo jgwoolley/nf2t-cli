@@ -354,6 +354,41 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 		return 0;
 	}
 
+	private int buildArtifact(final Path artifactsPath, final MavenProject mavenProject, final String artifactName) {
+		final Path artifactPath = mavenProject.getProjectPath().resolve("target").resolve(artifactName);
+		final Path newArtifactPath = artifactsPath.resolve(artifactName);
+		
+		try{
+			Files.deleteIfExists(newArtifactPath);
+			Files.copy(artifactPath, newArtifactPath);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return 1;
+		}
+		
+		return 0;
+	}
+	
+	private int buildArtifacts(final Path projectPath, final Configuration configuration, final MavenProject mavenProject) {
+		final Path artifactsPath = projectPath.resolve("artifacts");
+
+		try {
+			Files.createDirectories(artifactsPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return 1;
+		}
+		
+		for(final Entry<String, String> entry: mavenProject.getMavenArtifact().getMavenCentralArtifactNames().entrySet()) {
+			final String artifactName = entry.getValue();
+			buildArtifact(artifactsPath, mavenProject, artifactName);
+		}
+		
+		buildArtifact(artifactsPath, mavenProject, mavenProject.getMavenArtifact().getMavenCentralArtifactName());
+		
+		return 0;
+	}
+	
 	public Integer packageDocumentation(final Path outPath, final Configuration configuration,
 			final MavenProject mavenProject) {
 		final Path projectPath = outPath.resolve(mavenProject.getMavenArtifact().getArtifactId());
@@ -366,6 +401,10 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 		}
 
 		try {
+			int buildArtifactsResult = buildArtifacts(projectPath, configuration, mavenProject);
+			if (buildArtifactsResult != 0)
+				return buildArtifactsResult;
+						
 			int buildIndexResult = buildProjectIndex(projectPath, configuration, mavenProject);
 			if (buildIndexResult != 0)
 				return buildIndexResult;
