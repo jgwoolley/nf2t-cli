@@ -9,6 +9,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -91,8 +91,7 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 		return cfg;
 	}
 
-	private int buildIndex(final ZipOutputStream zos, final Configuration configuration,
-			final MavenProject[] mavenProjects) {
+	private int buildIndex(final Path outPath, final Configuration configuration, final MavenProject[] mavenProjects) {
 		try {
 			final Map<String, Object> data = new HashMap<String, Object>();
 			data.put("mavenProjects", mavenProjects);
@@ -105,9 +104,8 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 				// Process template and write to output file
 				template.process(data, fileWriter);
 
-				final String zipEntryName = "/index.html";
-				zos.putNextEntry(new ZipEntry(zipEntryName));
-				zos.write(stringWriter.toString().getBytes());
+				final Path indexPath = outPath.resolve("index.html");
+				Files.writeString(indexPath, stringWriter.toString());
 			}
 
 		} catch (Exception e) {
@@ -118,7 +116,7 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 
 	}
 
-	private int buildProjectIndex(final ZipOutputStream zos, final Configuration configuration,
+	private int buildProjectIndex(final Path outPath, final Configuration configuration,
 			final MavenProject mavenProject) {
 
 		try {
@@ -132,9 +130,8 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 				// Process template and write to output file
 				template.process(data, fileWriter);
 
-				final String zipEntryName = mavenProject.getDocumentationZipEntryPrefix("index.html");
-				zos.putNextEntry(new ZipEntry(zipEntryName));
-				zos.write(stringWriter.toString().getBytes());
+				final Path indexPath = outPath.resolve("index.html");
+				Files.writeString(indexPath, stringWriter.toString());
 			}
 
 		} catch (Exception e) {
@@ -173,8 +170,16 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 		}
 	}
 
-	private Integer buildManPage(final ZipOutputStream zos, final Configuration configuration,
+	private Integer buildManPage(final Path outPath, final Configuration configuration,
 			final MavenProject mavenProject) {
+		final Path manPath = outPath.resolve("man");
+		try {
+			Files.createDirectories(manPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return 1;
+		}
+
 		final Path projectPath = mavenProject.getProjectPath();
 		final MavenArtifact artifact = mavenProject.getMavenArtifact();
 		final Map<String, Object> data = mavenProject.getDataModel();
@@ -205,7 +210,6 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 			if (exitCode != 0) {
 				return exitCode;
 			}
-			final String zipEntryPrefix = mavenProject.getDocumentationManPageZipEntryPrefix();
 
 			final Asciidoctor asciidoctor = Asciidoctor.Factory.create();
 
@@ -217,29 +221,37 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 //		                .backend("manpage") //Optional, but recommended
 					.build();
 
-			zos.putNextEntry(new ZipEntry(zipEntryPrefix));
-			zos.closeEntry();
 			final String extension = ".adoc";
 
-			List<Entry<Path, String>> manPaths = Files.list(tmpDirPath).map(manPath -> {
-				String htmlFileName = manPath.getFileName().toString();
-				htmlFileName = htmlFileName.substring(0, htmlFileName.length() - extension.length()) + ".html";
+			List<Entry<Path, String>> manPaths = Files.list(tmpDirPath).map(path -> {
+				String htmlFileName = path.getFileName().toString();
+				htmlFileName = htmlFileName.substring(0, htmlFileName.length() - extension.length());
 
-				return Map.entry(manPath, htmlFileName);
+				return Map.entry(path, htmlFileName);
 			}).collect(Collectors.toList());
 
+			manPaths.sort((a, b) -> {
+				return a.getValue().length() - b.getValue().length();
+			});
+						
+			final String mainCommand = manPaths.get(0).getValue();
+			
 			for (Entry<Path, String> entry : manPaths) {
-				final Path manPath = entry.getKey();
-				final String htmlFileName = entry.getValue();
+				final Path path = entry.getKey();
+				
+				if(mainCommand.length() != entry.getValue().length()) {
+					final String command = entry.getValue().substring(mainCommand.length() + 1, entry.getValue().length());
+					System.out.println("Parsed Command: " + command);
+				}
+				
+				final String htmlFileName = entry.getValue() + ".html";
 
 				try {
-					final String asciidocContent = Files.readString(manPath);
+					final String asciidocContent = Files.readString(path);
 					final String htmlContent = asciidoctor.convert(asciidocContent, options);
-					final String zipEntryName = mavenProject.getDocumentationManPageZipEntryPrefix(htmlFileName);
-					final ZipEntry zipEntry = new ZipEntry(zipEntryName);
-					zos.putNextEntry(zipEntry);
-					zos.write(htmlContent.getBytes());
-					zos.closeEntry();
+					final Path htmlPath = manPath.resolve(htmlFileName);
+
+					Files.writeString(htmlPath, htmlContent);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -248,14 +260,15 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 			data.put("manPaths", manPaths.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 
 			try (final StringWriter stringWriter = new StringWriter();
-					java.io.Writer fileWriter = new java.io.BufferedWriter(stringWriter);) {
+					final java.io.Writer fileWriter = new java.io.BufferedWriter(stringWriter);) {
 				// Load template
-				Template template = configuration.getTemplate("man.ftl");
+				final Template template = configuration.getTemplate("man.ftl");
 
 				// Process template and write to output file
+				final Path indexPath = manPath.resolve("index.html");
 				template.process(data, fileWriter);
-				zos.putNextEntry(new ZipEntry(zipEntryPrefix + "index.html"));
-				zos.write(stringWriter.toString().getBytes());
+
+				Files.writeString(indexPath, stringWriter.toString());
 			}
 
 		} catch (Exception e) {
@@ -267,8 +280,16 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 		return 0;
 	}
 
-	private Integer buildJavaDocs(final ZipOutputStream zos, final Configuration configuration,
+	private Integer buildJavaDocs(final Path outPath, final Configuration configuration,
 			final MavenProject mavenProject) {
+		final Path javaDocPath = outPath.resolve("javadoc");
+		try {
+			Files.createDirectories(javaDocPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return 1;
+		}
+
 		final Path projectPath = mavenProject.getProjectPath();
 		final MavenArtifact artifact = mavenProject.getMavenArtifact();
 
@@ -278,50 +299,91 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 			return 1;
 		}
 
-		final Path javaDocPath = targetPath.resolve(artifact.getFileName("-javadoc.jar"));
-		if (!Files.isRegularFile(javaDocPath)) {
-			new Exception("Path must be a file: " + javaDocPath).printStackTrace();
+		final Path javaDocJarPath = targetPath.resolve(artifact.getFileName("-javadoc.jar"));
+		if (!Files.isRegularFile(javaDocJarPath)) {
+			new Exception("Path must be a file: " + javaDocJarPath).printStackTrace();
 			return 1;
 		}
 
-		try (ZipInputStream sourceZip = new ZipInputStream(Files.newInputStream(javaDocPath))) {
+		try (ZipInputStream sourceZip = new ZipInputStream(Files.newInputStream(javaDocJarPath))) {
 
 			ZipEntry entry;
 			while ((entry = sourceZip.getNextEntry()) != null) {
-				String entryName = entry.getName();
-				String newEntryName = mavenProject.getDocumentationJavaDocZipEntryPrefix(entryName); // Add destination folder
+				final String entryName = entry.getName();
+				final Path entryPath = javaDocPath.resolve(entryName);
 
-				ZipEntry newEntry = new ZipEntry(newEntryName);
-				zos.putNextEntry(newEntry);
+				if (entry.isDirectory()) {
+					Files.createDirectories(entryPath);
+					continue;
+				}
+				Files.createDirectories(entryPath.getParent());
 
-				// Copy the data
-				byte[] buffer = new byte[1024];
-				int len;
-				while ((len = sourceZip.read(buffer)) > 0) {
-					zos.write(buffer, 0, len);
+				try (final OutputStream os = Files.newOutputStream(entryPath)) {
+					// Copy the data
+					byte[] buffer = new byte[1024];
+					int len;
+					while ((len = sourceZip.read(buffer)) > 0) {
+						os.write(buffer, 0, len);
+					}
+
+					sourceZip.closeEntry();
 				}
 
-				zos.closeEntry();
-				sourceZip.closeEntry();
 			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			return 1;
 		}
+
+		try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(javaDocJarPath))) {
+			ZipEntry entry = zipIn.getNextEntry();
+			while (entry != null) {
+				try {
+					final Path entryPath = javaDocPath.resolve(entry.getName());
+					if (entry.isDirectory()) {
+						Files.createDirectories(entryPath);
+					} else {
+						Files.createDirectories(entryPath.getParent()); // Ensure parent dirs exist
+                        Files.copy(zipIn, entryPath, StandardCopyOption.REPLACE_EXISTING); //Corrected line
+					}
+					zipIn.closeEntry();
+					entry = zipIn.getNextEntry();
+				} catch (Exception e) {
+					System.err.println("Could not parse JavaDoc Jar: " + javaDocJarPath + ". Entry: " + entry.getName());
+					e.printStackTrace();
+					return 1;
+				}
+				
+			}
+		} catch (Exception e) {
+			System.err.println("Could not parse JavaDoc Jar: " + javaDocJarPath);
+			e.printStackTrace();
+			return 1;
+		}
+
 		return 0;
 	}
 
-	public Integer packageDocumentation(final ZipOutputStream zos, final Configuration configuration, final MavenProject mavenProject) {
+	public Integer packageDocumentation(final Path outPath, final Configuration configuration,
+			final MavenProject mavenProject) {
+		final Path projectPath = outPath.resolve(mavenProject.getMavenArtifact().getArtifactId());
 
 		try {
-			int buildIndexResult = buildProjectIndex(zos, configuration, mavenProject);
+			Files.createDirectories(projectPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return 1;
+		}
+
+		try {
+			int buildIndexResult = buildProjectIndex(projectPath, configuration, mavenProject);
 			if (buildIndexResult != 0)
 				return buildIndexResult;
-			int buildManPageResult = buildManPage(zos, configuration, mavenProject);
+			int buildManPageResult = buildManPage(projectPath, configuration, mavenProject);
 			if (buildManPageResult != 0)
 				return buildIndexResult;
-			int buildJavaDocsResult = buildJavaDocs(zos, configuration, mavenProject);
+			int buildJavaDocsResult = buildJavaDocs(projectPath, configuration, mavenProject);
 			if (buildJavaDocsResult != 0)
 				return buildIndexResult;
 		} catch (Exception e) {
@@ -335,12 +397,10 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws Exception {
-		final Path targetPath = workdir.resolve("target");
-		final Path outPath = targetPath.resolve("docs.zip");
+		final Path distPath = workdir.resolve("dist");
 
 		try {
-			Files.createDirectories(targetPath);
-			Files.deleteIfExists(outPath);
+			Files.createDirectories(distPath);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return 1;
@@ -349,22 +409,15 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 		final MavenProject[] mavenProjects = MavenUtils.parseMavenProjects(dBuilder, inputPaths);
 		final Configuration configuration = generateConfiguration();
 
-		try (final OutputStream fos = Files.newOutputStream(outPath);
-				final ZipOutputStream zos = new ZipOutputStream(fos);) {
-			
-			buildIndex(zos, configuration, mavenProjects);
-			for (final MavenProject mavenProject : mavenProjects) {
-				final int returnCode = packageDocumentation(zos, configuration, mavenProject);
-				if (returnCode != 0) {
-					return returnCode;
-				}
+		buildIndex(distPath, configuration, mavenProjects);
+		for (final MavenProject mavenProject : mavenProjects) {
+			final int returnCode = packageDocumentation(distPath, configuration, mavenProject);
+			if (returnCode != 0) {
+				return returnCode;
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-			return 1;
 		}
 
-		System.out.println(ConsoleColors.GREEN + "Documentation Zip generated at " + outPath + ConsoleColors.RESET);
+		System.out.println(ConsoleColors.GREEN + "Documentation Zip generated at " + distPath + ConsoleColors.RESET);
 
 		return 0;
 	}
