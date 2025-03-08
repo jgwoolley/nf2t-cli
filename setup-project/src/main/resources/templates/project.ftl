@@ -19,54 +19,17 @@
                     <th>Value</th>
                 </tr>
             </thead>
-            <tbody>
-            	<tr>
-                    <td>Maven Artifact Name</td>
-                    <td>${mavenProject.getMavenArtifact().getName()}</td>
-                </tr>
-                <tr>
-                    <td>Build Time</td>
-                    <td>${mavenProject.getBuildTime()}</td>
-                </tr>
-                <tr>
-				  	<td>Maven Coordinate</td>
-				  	<td>${mavenProject.getMavenArtifact().getCoordinate()}</td>  	
-			  	</tr>
-                <tr>
-                    <td>Git Hash</td>
-                    <td>${mavenProject.getGitHash()}</td>
-                </tr>
-                <tr>
-                    <td>Maven Artifact Id</td>
-                    <td>${mavenProject.getMavenArtifact().getArtifactId()}</td>
-                </tr>
-                <tr>
-                    <td>Maven Artifact GroupId</td>
-                    <td>${mavenProject.getMavenArtifact().getGroupId()}</td>                   
-                </tr>
-                <tr>
-                    <td>Maven Artifact Version</td>
-                    <td>${mavenProject.getMavenArtifact().getVersion()}</td>                   
-                </tr>
-                <tr>
-                	<td>JavaDocs</td>
-                	<td><a href="./javadoc/index.html">./javadoc/index.html</a></td>
-                </tr>
-                <tr>
-                	<td>ManPages</td>
-                	<td><a href="./man/index.html">./man/index.html</a></td>
-                </tr>
-                <tbody>
-                <#list mavenProject.getMavenArtifact().getMavenCentralArtifactNames()?keys as key>
-                <tr>
-				    <td>${key} Artifact</td>
-                    <td><a href="./artifacts/${mavenProject.getMavenArtifact().getMavenCentralArtifactNames()[key]}">${mavenProject.getMavenArtifact().getMavenCentralArtifactNames()[key]}</a></td>
-                    </tr>
-				</#list>    
-			  	<tr>
-			  		<td>Maven Central Zip</td>
-			  		<td><a href="./artifacts/${mavenProject.getMavenArtifact().getMavenCentralArtifactName()}">${mavenProject.getMavenArtifact().getMavenCentralArtifactName()}</a></td>
-			  	</tr>			  			  
+            <tbody>	
+			  	 <#list properties as property>
+	                <tr>
+					    <td>${property.getPropertyName()}</td>
+					    <#if property.getUrl()?? >
+	                    	<td><a href="${property.getUrl()}">${property.getPropertyValue()}</a></td>
+	                    <#else>
+	                    	<td>${property.getPropertyValue()}</td>	                   
+	                    </#if>
+	                </tr>
+				</#list>   			  
             </tbody>
         </table>
     </body>

@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.parsers.DocumentBuilder;
 
@@ -104,7 +106,7 @@ public class MavenUtils {
 		return artifact;
 	}
 	
-	public static MavenProject parseMavenProject(final Instant buildTime, final DocumentBuilder dBuilder, final Path projectPath) {
+	public static MavenProject parseMavenProject(final String commitURL, final Instant buildTime, final MavenProjectType projectType, final DocumentBuilder dBuilder, final Path projectPath) {
 
 		final MavenArtifact artifact = MavenUtils.parseMavenArtifact(dBuilder, projectPath);
 		if (artifact == null) {
@@ -113,18 +115,21 @@ public class MavenUtils {
 		
 		final String gitHash = GitUtils.createGitHash(projectPath);
 				
-		return new MavenProject(buildTime, projectPath, artifact, gitHash);
+		return new MavenProject(buildTime, projectType, projectPath, artifact, gitHash, commitURL);
 	}
 	
-	public static MavenProject[] parseMavenProjects(final DocumentBuilder dBuilder, final Path[] projectPaths) {
-		final MavenProject[] projects = new MavenProject[projectPaths.length];
+	public static List<MavenProject> parseMavenProjects(final String commitURL, final DocumentBuilder dBuilder, final Map<MavenProjectType, Path[]> mavenProjectsByType) {
+		final List<MavenProject> projects = new ArrayList<>();
 		
 		final Instant buildTime = Instant.now();
-		
-		for(int index = 0; index < projectPaths.length; index++) {
-			final Path projectPath = projectPaths[index];
-			final MavenProject project = parseMavenProject(buildTime, dBuilder, projectPath);
-			projects[index] = project;
+				
+		for(final Entry<MavenProjectType, Path[]> projectsByTypeEntry: mavenProjectsByType.entrySet()) {
+			final MavenProjectType projectType = projectsByTypeEntry.getKey();
+			for(final Path projectPath: projectsByTypeEntry.getValue()) {
+				final MavenProject project = parseMavenProject(commitURL, buildTime, projectType, dBuilder, projectPath);
+				projects.add(project);
+			}
+			
 		}
 		
 		return projects;

@@ -34,16 +34,22 @@ import freemarker.template.TemplateExceptionHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @Command(name = "docs", description = "Packages documentation, including ManPages, and JavaDocs.")
 public class SubCommandGenerateDocs implements Callable<Integer> {
 
 	@Option(names = { "-w", "--workdir" }, description = ".", defaultValue = ".")
 	private Path workdir;
-	@Parameters(description = "A path of a Maven Project.", defaultValue = ".")
-	private Path[] inputPaths;
+	
+	@Option(names= { "-m", "--maven" }, description = "A path of a Maven Project.")
+	private Path[] mavenPaths;
 
+	@Option(names= { "-p", "--picocli" }, description = "A path of a Picocli Maven Project.")
+	private Path[] picocliInputPaths;
+	
+	@Option(names= { "-c", "--commitURL" }, description = "An optional URL to prefix to the commit.")
+	private String commitURL;
+	
 	private DocumentBuilderFactory dbFactory;
 	private DocumentBuilder dBuilder;
 
@@ -91,7 +97,7 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 		return cfg;
 	}
 
-	private int buildIndex(final Path outPath, final Configuration configuration, final MavenProject[] mavenProjects) {
+	private int buildIndex(final Path outPath, final Configuration configuration, final List<MavenProject> mavenProjects) {
 		try {
 			final Map<String, Object> data = new HashMap<String, Object>();
 			data.put("mavenProjects", mavenProjects);
@@ -400,6 +406,8 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 			return 1;
 		}
 
+		System.out.println(ConsoleColors.PURPLE + "Starting Project: " + mavenProject.getProjectName() + ConsoleColors.RESET);
+		
 		try {
 			int buildArtifactsResult = buildArtifacts(projectPath, configuration, mavenProject);
 			if (buildArtifactsResult != 0)
@@ -408,9 +416,12 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 			int buildIndexResult = buildProjectIndex(projectPath, configuration, mavenProject);
 			if (buildIndexResult != 0)
 				return buildIndexResult;
-			int buildManPageResult = buildManPage(projectPath, configuration, mavenProject);
-			if (buildManPageResult != 0)
-				return buildIndexResult;
+			if(mavenProject.getProjectType() == MavenProjectType.PICOCLI) {
+				int buildManPageResult = buildManPage(projectPath, configuration, mavenProject);
+				if (buildManPageResult != 0)
+					return buildIndexResult;
+			}
+			
 			int buildJavaDocsResult = buildJavaDocs(projectPath, configuration, mavenProject);
 			if (buildJavaDocsResult != 0)
 				return buildIndexResult;
@@ -419,6 +430,8 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 			e.printStackTrace();
 			return 1;
 		}
+		
+		System.out.println(ConsoleColors.YELLOW + "Created Project: " + mavenProject.getProjectName() + ConsoleColors.RESET);
 
 		return 0;
 	}
@@ -434,7 +447,25 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 			return 1;
 		}
 
-		final MavenProject[] mavenProjects = MavenUtils.parseMavenProjects(dBuilder, inputPaths);
+		final Map<MavenProjectType, Path[]> mavenProjectsByType = new HashMap<>();
+		
+		int projectCount = 0;
+		if(mavenPaths != null && mavenPaths.length > 0) {
+			mavenProjectsByType.put(MavenProjectType.MAVEN, mavenPaths);
+			projectCount+=mavenPaths.length;
+		}
+		
+		if(picocliInputPaths != null && picocliInputPaths.length > 0) {
+			mavenProjectsByType.put(MavenProjectType.PICOCLI, picocliInputPaths);
+			projectCount+=picocliInputPaths.length;
+		}
+		
+		if(projectCount <= 0) {
+			mavenProjectsByType.put(MavenProjectType.MAVEN, new Path [] { this.workdir });
+		}
+		
+		final List<MavenProject> mavenProjects = MavenUtils.parseMavenProjects(commitURL, dBuilder, mavenProjectsByType);
+		System.out.println(ConsoleColors.CYAN + "Projects: " + mavenProjects + ConsoleColors.RESET);
 		final Configuration configuration = generateConfiguration();
 
 		buildIndex(distPath, configuration, mavenProjects);
@@ -451,7 +482,7 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 	}
 
 	public static void main(String[] args) throws ParserConfigurationException, IOException {
-		int rc = new CommandLine(new SubCommandGenerateDocs()).execute(args);
+		int rc = new CommandLine(new SubCommandGenerateDocs()).execute(new String[] {"--workdir", "../", "--picocli", "../setup-project",  "--picocli", "../nf2t-cli", "--commitURL", "https://github.com/jgwoolley/nf2t-cli/commit/"});
 		System.exit(rc);
 	}
 
