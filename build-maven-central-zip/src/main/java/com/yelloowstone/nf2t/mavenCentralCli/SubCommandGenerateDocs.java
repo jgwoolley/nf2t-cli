@@ -73,7 +73,7 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 
 	private static Configuration generateConfiguration() throws IOException {
 		final Path templateDirPath = Files.createTempDirectory("templateDir");
-		for (String templateName : new String[] { "root.ftl", "project.ftl", "man.ftl" }) {
+		for (String templateName : new String[] { "root.ftl", "project.ftl" }) {
 			String content = loadResourceAsString("templates/" + templateName);
 			Files.writeString(templateDirPath.resolve(templateName), content);
 		}
@@ -182,7 +182,6 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 
 		final Path projectPath = mavenProject.getProjectPath();
 		final MavenArtifact artifact = mavenProject.getMavenArtifact();
-		final Map<String, Object> data = mavenProject.getDataModel();
 
 		final Path targetPath = projectPath.resolve("target");
 		if (!Files.isDirectory(targetPath)) {
@@ -234,13 +233,13 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 				return a.getValue().length() - b.getValue().length();
 			});
 						
-			final String mainCommand = manPaths.get(0).getValue();
+			final Entry<Path, String> mainCommand = manPaths.get(0);
 			
 			for (Entry<Path, String> entry : manPaths) {
 				final Path path = entry.getKey();
 				
-				if(mainCommand.length() != entry.getValue().length()) {
-					final String command = entry.getValue().substring(mainCommand.length() + 1, entry.getValue().length());
+				if(mainCommand.getValue().length() != entry.getValue().length()) {
+					final String command = entry.getValue().substring(mainCommand.getValue().length() + 1, entry.getValue().length());
 					System.out.println("Parsed Command: " + command);
 				}
 				
@@ -257,20 +256,10 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 				}
 			}
 
-			data.put("manPaths", manPaths.stream().map(x -> x.getValue()).collect(Collectors.toList()));
-
-			try (final StringWriter stringWriter = new StringWriter();
-					final java.io.Writer fileWriter = new java.io.BufferedWriter(stringWriter);) {
-				// Load template
-				final Template template = configuration.getTemplate("man.ftl");
-
-				// Process template and write to output file
-				final Path indexPath = manPath.resolve("index.html");
-				template.process(data, fileWriter);
-
-				Files.writeString(indexPath, stringWriter.toString());
-			}
-
+			final Path htmlPath = manPath.resolve(mainCommand.getValue() + ".html");
+			final Path indexPath = manPath.resolve("index.html");
+			Files.deleteIfExists(indexPath);
+			Files.copy(htmlPath, indexPath);
 		} catch (Exception e) {
 			System.err.println("Could not write ZipEntry.");
 			e.printStackTrace();
@@ -417,7 +406,7 @@ public class SubCommandGenerateDocs implements Callable<Integer> {
 			}
 		}
 
-		System.out.println(ConsoleColors.GREEN + "Documentation Zip generated at " + distPath + ConsoleColors.RESET);
+		System.out.println(ConsoleColors.GREEN + "Documentation Zip generated at " + distPath.toAbsolutePath() + ConsoleColors.RESET);
 
 		return 0;
 	}

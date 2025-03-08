@@ -216,7 +216,7 @@ public class App implements Callable<Integer> {
 			e.printStackTrace();
 			return 1;
 		} finally {
-			System.out.println(ConsoleColors.GREEN + "Zip generated at " + outPath + "\nCoordinate: "
+			System.out.println(ConsoleColors.GREEN + "Zip generated at " + outPath.toAbsolutePath() + "\nCoordinate: "
 					+ artifact.getCoordinate() + ConsoleColors.RESET);
 		}
 	}

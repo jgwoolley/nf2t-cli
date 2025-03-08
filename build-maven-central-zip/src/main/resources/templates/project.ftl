@@ -11,6 +11,7 @@
     <body>
         <h1>${mavenProject.getMavenArtifact().getName()}</h1>
         <p><a href="../index.html">Go to parent</a></p>
+        <p>${mavenProject.getMavenArtifact().getDescription()}</p>
         <table>
             <thead>
                 <tr>
