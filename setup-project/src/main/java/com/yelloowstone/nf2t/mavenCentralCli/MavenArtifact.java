@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenArtifact {
+	public static final String[] DIGEST_NAMES = new String[] {"MD5", "SHA1", "SHA256", "SHA512"};
+	
 	private final String groupId;
 	private final String artifactId;
 	private final String version;

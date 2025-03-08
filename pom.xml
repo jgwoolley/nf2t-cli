@@ -45,7 +45,7 @@
 		</dependencies>
 	</dependencyManagement>
 	<modules>
-		<module>build-maven-central-zip</module>
+		<module>setup-project</module>
 		<module>nf2t-cli</module>
 	</modules>
 </project>

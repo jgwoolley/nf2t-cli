@@ -7,7 +7,7 @@
 		<artifactId>nf2t-parent</artifactId>
 		<version>0.0.9-SNAPSHOT</version>
 	</parent>
-	<artifactId>build-maven-central-zip</artifactId>
+	<artifactId>setup-project</artifactId>
 	<packaging>jar</packaging>
 	<name>Maven Central ZIP CLI</name>
 	<description>A Java CLI for building the Maven Central ZIP file.</description>

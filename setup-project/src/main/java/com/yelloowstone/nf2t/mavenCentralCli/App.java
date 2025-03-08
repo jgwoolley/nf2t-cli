@@ -45,7 +45,7 @@ public class App implements Callable<Integer> {
 		this.dBuilder = dbFactory.newDocumentBuilder();
 	}
 
-	private Integer signArtifact(String gpgUser, MavenArtifact artifact, ZipOutputStream zos, Path artifactPath)
+	private Integer signArtifact(final String gpgUser, final MavenArtifact artifact, final ZipOutputStream zos, final Path artifactPath)
 			throws IOException {
 		final String zipEntryName = artifact.getMavenCentralZipEntryPrefix();
 		final String fileName = artifactPath.getFileName().toString();
@@ -100,7 +100,7 @@ public class App implements Callable<Integer> {
 		try (final InputStream fis = Files.newInputStream(artifactPath)) {
 			final Map<String, MessageDigest> digests = new HashMap<>();
 
-			for (String key : new String[] { "MD5", "SHA1", "SHA256", "SHA512" }) {
+			for (String key : MavenArtifact.DIGEST_NAMES) {
 				digests.put(key, MessageDigest.getInstance(key));
 			}
 
@@ -224,7 +224,7 @@ public class App implements Callable<Integer> {
 
 	@Command(name = "mavenCentral", description = "Packages Maven packages meant for the Maven Central Repository.")
 	public Integer packageMavenCentral(
-			@Parameters(description = "A path of a Maven Project.", defaultValue = ".") Path[] inputPaths,
+			@Parameters(description = "A path of a Maven Project.", defaultValue = ".") final Path[] inputPaths,
 			@Option(names = { "--gpgUser", "-u" }, required = false, description = {
 					"The local GPG user that will be fed into GPG command." }) final String gpgUser) {
 		for (final Path projectPath : inputPaths) {
