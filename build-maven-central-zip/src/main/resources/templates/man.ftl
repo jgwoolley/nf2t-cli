@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>${name} ManPage</title>
+        <title>${mavenProject.getMavenArtifact().getName()} ManPage</title>
         <style>
             table, th, td {
                 border: 2px solid black; 
@@ -9,7 +9,8 @@
         </style>
     </head>
     <body>
-        <h1>${artifactId} ManPage</h1>
+        <h1>${mavenProject.getMavenArtifact().getName()} ManPage</h1>
+		<p><a href="../index.html">Go to parent</a></p>
 
 	<p>The following manpages are available:</p>
 

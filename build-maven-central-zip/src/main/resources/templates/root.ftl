@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>${name}</title>
+        <title>Projects</title>
         <style>
             table, th, td {
                 border: 2px solid black; 
@@ -9,44 +9,26 @@
         </style>
     </head>
     <body>
-        <h1>${name}</h1>
+        <h1>Projects</h1>
+        <p>The following projects are available:</p>
+        
         <table>
             <thead>
                 <tr>
-                    <th>Property</th>
-                    <th>Value</th>
+                    <th>Project</th>
+                    <th>JavaDocs</th>
+                    <th>ManPages</th>
                 </tr>
             </thead>
             <tbody>
+            	<#list mavenProjects as mavenProject>
             	<tr>
-                    <td>Maven Artifact Name</td>
-                    <td>${name}</td>
+                    <td><a href=".${mavenProject.getDocumentationZipEntryPrefix("index.html")}">${mavenProject.getProjectName()}</a></td>
+                    <td><a href=".${mavenProject.getDocumentationJavaDocZipEntryPrefix("index.html")}">JavaDocs Page</a></td>
+                    <td><a href=".${mavenProject.getDocumentationManPageZipEntryPrefix("index.html")}">Man Page</a></td>
                 </tr>
-                <tr>
-                    <td>Build Time</td>
-                    <td>${buildTime}</td>
-                </tr>
-                <tr>
-                    <td>Git Hash</td>
-                    <td>${gitHash}</td>
-                </tr>
-                <tr>
-                    <td>Maven Artifact Id</td>
-                    <td>${artifactId}</td>
-                </tr>
-                <tr>
-                    <td>Maven Artifact GroupId</td>
-                    <td>${groupId}</td>
-                </tr>
-                <tr>
-                    <td>Maven Artifact Version</td>
-                    <td>${version}</td>
-                </tr>
+			  </#list>
             </tbody>
         </table>
-        <ul>
-        	<li><a href="./javadoc/index.html">See the JavaDocs</a>.</li>
-        	<li><a href="./man/index.html">See the ManPages.</a></li>
-        </ul>
     </body>
 </html>

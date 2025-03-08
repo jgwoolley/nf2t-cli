@@ -43,11 +43,7 @@ jobs:
     #- name: Update dependency graph
     #  uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
     - name: Build Project
-      run: bash build.sh
-    - name: Install Asciidoc
-      run: sudo apt-get install -y asciidoctor 
-    - name: Build Docs
-      run: bash docs.sh
+      run: bash build.sh server
     - name: Setup Pages
       uses: actions/configure-pages@v3
     - name: Upload artifact

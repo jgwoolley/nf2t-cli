@@ -1,8 +1,5 @@
 package com.yelloowstone.nf2t.mavenCentralCli;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -48,39 +45,5 @@ public class XmlUtils {
 			return defaultValue;
 		}
 		return value;
-	}
-	
-	public static MavenArtifact readMavenArtifact(final Element element) {
-		if(element == null) {
-			System.err.println("Unable to read Maven artifact. Given empty Element.");
-			return null;
-		}
-		
-		final String groupId = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "groupId");
-        final String artifactId = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "artifactId");
-        final String version = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "version");
-        final String packaging = XmlUtils.getTextContentByTagNameWithDefault(element, "parent", "packaging", "jar");
-        String name = XmlUtils.getTextContentByTagName(element, "name");
-        if(name == null) {
-        	name = artifactId;
-        }
-        final List<String> modules = new ArrayList<>();
-        
-        final MavenArtifact artifact = new MavenArtifact(groupId, artifactId, version, packaging, name, modules);
-        
-        NodeList modulesNodeList = element.getElementsByTagName("modules");
-		
-        if (modulesNodeList.getLength() > 0) {
-            Element modulesElement = (Element) modulesNodeList.item(0);  // Get the <modules> element
-            NodeList moduleNodeList = modulesElement.getElementsByTagName("module"); // Get all <module> elements
-
-            for (int i = 0; i < moduleNodeList.getLength(); i++) {
-                Element moduleElement = (Element) moduleNodeList.item(i);
-                String moduleName = moduleElement.getTextContent().trim(); // Extract and trim whitespace
-                modules.add(moduleName);
-            }
-        }
-        
-        return artifact;
 	}
 }

@@ -57,6 +57,9 @@ I've developed several versions of this project over the years, and created a We
 * link:./test.sh[test.sh]: After running the build script, will test the executable jar.
 
 == TODO
+* Do not neet to ZIP docs, just put them in DIST folder.
+* Rename build-maven-central-zip to setup-project or something?
+** Move to another seperate project?
 * https://picocli.info/autocomplete.html
 ** java -cp nf2t-cli-0.0.9-SNAPSHOT.jar picocli.AutoComplete -n nf2t com.yelloowstone.nf2t.cli.App
 * Add SLF4J Logging
