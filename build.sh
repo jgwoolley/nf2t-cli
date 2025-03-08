@@ -6,6 +6,10 @@ mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp --quiet
 version=$(cat version.mvnhelp)
 rm *.mvnhelp
 
+pwd
+
+echo "Running mvn install"
+
 if [ "$1" == "server" ]; then
     mvn install --quiet
 else
