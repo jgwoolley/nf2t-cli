@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.yelloowstone.nf2t</groupId>
 		<artifactId>nf2t-parent</artifactId>
-		<version>0.0.10-SNAPSHOT</version>
+		<version>0.0.10</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<artifactId>nf2t-cli</artifactId>
