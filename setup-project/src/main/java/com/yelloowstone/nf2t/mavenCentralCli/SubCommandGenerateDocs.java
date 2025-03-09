@@ -103,10 +103,10 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 	}
 
 	private int buildProjectIndex(final Path outPath, final Configuration configuration,
-			final MavenProject mavenProject) {
+			final MavenProject mavenProject, final Map<String, String> buildArtifactsResult) {
 
 		try {
-			final Map<String, Object> data = mavenProject.getDataModel();
+			final Map<String, Object> data = mavenProject.getDataModel(buildArtifactsResult);
 
 			try (final StringWriter stringWriter = new StringWriter();
 					java.io.Writer fileWriter = new java.io.BufferedWriter(stringWriter);) {
@@ -269,13 +269,13 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 
 		final Path targetPath = projectPath.resolve("target");
 		if (!Files.isDirectory(targetPath)) {
-			new Exception("Path must be a file: " + targetPath).printStackTrace();
+			new Exception("Given Target path was not a directory: " + targetPath).printStackTrace();
 			return 1;
 		}
 
 		final Path javaDocJarPath = targetPath.resolve(mavenProject.getFileName("-javadoc.jar"));
 		if (!Files.isRegularFile(javaDocJarPath)) {
-			new Exception("Path must be a file: " + javaDocJarPath).printStackTrace();
+			new Exception("Given JavaDoc artifact was not a file: " + javaDocJarPath).printStackTrace();
 			return 1;
 		}
 
@@ -340,40 +340,60 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 		return 0;
 	}
 
-	private int buildArtifact(final Path artifactsPath, final MavenProject mavenProject, final String artifactName) {
-		final Path artifactPath = mavenProject.getProjectPath().resolve("target").resolve(artifactName);
-		final Path newArtifactPath = artifactsPath.resolve(artifactName);
+	private Path buildArtifact(final Path artifactsPath, final MavenProject mavenProject,
+			final String artifactFilename) {
+		final Path artifactPath = mavenProject.getProjectPath().resolve("target").resolve(artifactFilename);
+
+		if (!Files.isRegularFile(artifactPath)) {
+			System.err.println("Could not find artifact: " + artifactPath);
+			return null;
+		}
+
+		final Path newArtifactPath = artifactsPath.resolve(artifactFilename);
+
+		// TODO: Only .jar .pom -javadoc.jar should have to exist...
 
 		try {
 			Files.deleteIfExists(newArtifactPath);
 			Files.copy(artifactPath, newArtifactPath);
 		} catch (Exception e) {
+			System.err.println("Could not move artifact: " + artifactPath + " to " + newArtifactPath);
 			e.printStackTrace();
-			return 1;
+			return null;
 		}
 
-		return 0;
+		return newArtifactPath;
 	}
 
-	private int buildArtifacts(final Path projectPath, final Configuration configuration,
+	private Map<String, String> buildArtifacts(final Path projectPath, final Configuration configuration,
 			final MavenProject mavenProject) {
+		final Map<String, String> result = new HashMap<>();
 		final Path artifactsPath = projectPath.resolve("artifacts");
 
 		try {
 			Files.createDirectories(artifactsPath);
 		} catch (IOException e) {
 			e.printStackTrace();
-			return 1;
+			return null;
 		}
 
 		for (final Entry<String, String> entry : mavenProject.getMavenCentralArtifactNames().entrySet()) {
-			final String artifactName = entry.getValue();
-			buildArtifact(artifactsPath, mavenProject, artifactName);
+			final String artifactKey = entry.getKey();
+			final String artifactFilename = entry.getValue();
+			final Path artifactPath = buildArtifact(artifactsPath, mavenProject, artifactFilename);
+			if (artifactPath != null) {
+				result.put(artifactKey, artifactFilename);
+			}
 		}
-
-		buildArtifact(artifactsPath, mavenProject, mavenProject.getMavenCentralArtifactName());
-
-		return 0;
+		final String mavenCentralArtifactName = mavenProject.getMavenCentralArtifactName();
+		final Path mavenCentralArtifactPath = buildArtifact(artifactsPath, mavenProject,
+				mavenProject.getMavenCentralArtifactName());
+		if (mavenCentralArtifactPath != null) {
+			result.put(MavenProject.MAVEN_CENTRAL_ARTIFACT_KEY, mavenCentralArtifactName);
+		}
+		System.out.println("Filtered Artifact Set: " + result.keySet());
+		
+		return result;
 	}
 
 	public Integer packageDocumentation(final Path outPath, final Configuration configuration,
@@ -391,11 +411,9 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 				ConsoleColors.PURPLE + "Starting Project: " + mavenProject.getProjectName() + ConsoleColors.RESET);
 
 		try {
-			int buildArtifactsResult = buildArtifacts(projectPath, configuration, mavenProject);
-			if (buildArtifactsResult != 0)
-				return buildArtifactsResult;
+			final Map<String, String> buildArtifactsResult = buildArtifacts(projectPath, configuration, mavenProject);
 
-			int buildIndexResult = buildProjectIndex(projectPath, configuration, mavenProject);
+			int buildIndexResult = buildProjectIndex(projectPath, configuration, mavenProject, buildArtifactsResult);
 			if (buildIndexResult != 0)
 				return buildIndexResult;
 			if (mavenProject.isPicocli()) {

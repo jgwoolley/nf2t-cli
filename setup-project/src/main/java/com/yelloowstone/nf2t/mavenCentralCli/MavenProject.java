@@ -11,6 +11,8 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 
 public class MavenProject {
+	public static final String MAVEN_CENTRAL_ARTIFACT_KEY = "Maven Central Zip";
+	
 	private final Instant buildTime;
 	private final Path projectPath;
 	private final Model mavenArtifact;
@@ -126,7 +128,7 @@ public class MavenProject {
 		return hasDependency("info.picocli", "picocli", null);
 	}
 	
-	public Map<String, Object> getDataModel() {
+	public Map<String, Object> getDataModel(final Map<String, String> buildArtifactsResult) {
 		final Map<String, Object> dataModel = new HashMap<>();
 		dataModel.put("mavenProject", this);
 
@@ -159,11 +161,11 @@ public class MavenProject {
 			properties.add(new MavenProjectProperty("Man Page URL", "./man/index.html", "./man/index.html"));
 		}
 		
-		getMavenCentralArtifactNames().entrySet().stream().sorted((a, b) -> a.getKey().compareTo(b.getKey())).forEach(x -> {
-			properties.add(new MavenProjectProperty(x.getKey(), "./artifacts/" + x.getValue(), "./artifacts/" + x.getValue()));
-		});
-
-		properties.add(new MavenProjectProperty("Maven Central Zip", "./artifacts/" + getMavenCentralArtifactName(), "./artifacts/" + getMavenCentralArtifactName()));
+		if(buildArtifactsResult != null) {
+			buildArtifactsResult.entrySet().stream().sorted((a, b) -> a.getKey().compareTo(b.getKey())).forEach(x -> {
+				properties.add(new MavenProjectProperty(x.getKey(), "./artifacts/" + x.getValue(), "./artifacts/" + x.getValue()));
+			});
+		}
 		
 		dataModel.put("properties", properties);
 
