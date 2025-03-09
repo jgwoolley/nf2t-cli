@@ -43,16 +43,31 @@ public class MavenUtils {
 		if (!Files.isRegularFile(artifactPath)) {
 			return null;
 		}
-
+		
+		Model model;
 		try (FileReader reader = new FileReader(artifactPath.toFile())) {
             MavenXpp3Reader mavenReader = new MavenXpp3Reader();
-            Model model = mavenReader.read(reader);
-            return model;
+            model = mavenReader.read(reader);            
 		} catch(IOException | XmlPullParserException e) {
 			System.err.println("Could not parse pom.xml: " + artifactPath);
             e.printStackTrace();
 			return null;
 		}
+		
+        final Path newArtifactPath = targetPath.resolve(MavenUtils.getFileName(model, ".pom"));
+		
+		if (model != null) {
+			try {
+				Files.deleteIfExists(newArtifactPath);
+				Files.move(artifactPath, newArtifactPath);
+			} catch (Exception e) {
+				System.err.println("Could not move pom file: " + newArtifactPath);
+				e.printStackTrace();
+				return null;
+			}
+		}
+		
+        return model;
 	}
 	
 	public static MavenProject parseMavenProject(final Instant buildTime, final Path projectPath) {
@@ -74,9 +89,17 @@ public class MavenUtils {
 				
 		for(final Path projectPath: paths) {
 			final MavenProject project = parseMavenProject(buildTime, projectPath);
+			if(project == null) {
+				System.err.println("Could not process project: " + projectPath);
+				return null;
+			}
 			projects.add(project);
 		}
 		
 		return projects;
+	}
+	
+	public static String getFileName(Model model, String postfix) {
+		return model.getArtifactId() + "-" + model.getVersion() + postfix;
 	}
 }

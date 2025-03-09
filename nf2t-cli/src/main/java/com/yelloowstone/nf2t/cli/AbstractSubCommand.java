@@ -31,7 +31,7 @@ public abstract class AbstractSubCommand implements Callable<Integer>, IVersionP
 		this.mapper = new ObjectMapper();
 		this.tika = new Tika();
 	}
-	
+
 	public CommandSpec getSpec() {
 		return spec;
 	}
@@ -49,26 +49,21 @@ public abstract class AbstractSubCommand implements Callable<Integer>, IVersionP
 	}
 
 	@Override
-    public String[] getVersion() throws Exception{
-    	return new String[] {};
-    }
-	
+	public String[] getVersion() throws Exception {
+		return new String[] {};
+	}
+
 	public FlowFilePackageVersion getPackageVersion(final int version) {
 		return packageVersions.get(version);
 	}
-	
+
 	public Map<String, String> generateDefaultAttributes(final Path path, final long contentSize) throws IOException {
 		return FlowFileUtils.generateDefaultAttributes(getTika(), path, contentSize);
 	}
-	
-	public FlowFileStreamResult createResult(final int version, 
-			String extension, 
-			final boolean uuidFilenames,
-			final String inputOption, 
-			String outputOption, 
-			final String resultsOption,
-			final Map<String, String> attributeExpressions, 
-			boolean keepAttributes) {
+
+	public FlowFileStreamResult createResult(final int version, String extension, final boolean uuidFilenames,
+			final String inputOption, String outputOption, final String resultsOption,
+			final Map<String, String> attributeExpressions, boolean keepAttributes) {
 		final Path inputPath = Paths.get(inputOption == null ? "." : inputOption);
 		final Path outputPath = outputOption == null || outputOption.length() <= 0 ? null : Paths.get(outputOption);
 		Path resultsPath = resultsOption == null ? null : Paths.get(resultsOption);
@@ -85,7 +80,7 @@ public abstract class AbstractSubCommand implements Callable<Integer>, IVersionP
 		return new FlowFileStreamResult(version, extension, uuidFilenames, inputPath, outputPath, resultsPath, unixTime,
 				attributeExpressions, keepAttributes);
 	}
-	
+
 	public boolean printResult(final FlowFileStreamResult result) {
 		try {
 			String x = this.mapper.writer().writeValueAsString(result);

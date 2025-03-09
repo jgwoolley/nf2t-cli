@@ -48,6 +48,10 @@ public abstract class AbstractSubCommand implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 		final List<MavenProject> mavenProjects = MavenUtils.parseMavenProjects(getInputPaths());
+		if(mavenProjects == null) {
+			return 1;
+		}
+		
 		System.out.println(ConsoleColors.CYAN + "Projects: " + mavenProjects + ConsoleColors.RESET);
 
 		return processProjects(mavenProjects);

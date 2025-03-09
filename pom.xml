@@ -6,7 +6,7 @@
 	<packaging>pom</packaging>
 	<groupId>com.yelloowstone.nf2t</groupId>
 	<artifactId>nf2t-parent</artifactId>
-	<version>0.0.9-SNAPSHOT</version>
+	<version>0.0.9</version>
 	<name>NiFi FlowFile Tools Parent POM</name>
 	<description>A Java CLI for parsing Apache NiFi FlowFiles.</description>
 	<url>https://github.com/jgwoolley/nf2t-cli</url>
@@ -40,7 +40,7 @@
 			<dependency>
 				<groupId>com.yelloowstone.nf2t</groupId>
 				<artifactId>nf2t-cli</artifactId>
-				<version>0.0.9-SNAPSHOT</version>
+				<version>0.0.9</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

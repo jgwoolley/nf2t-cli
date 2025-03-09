@@ -20,7 +20,7 @@ public class SubCommandGenerateSchema extends AbstractSubCommand {
 	@Override
 	public Integer call() throws Exception {
 		SchemaFactoryWrapper visitor = new SchemaFactoryWrapper();
-		getMapper().acceptJsonFormatVisitor(FlowFileStreamResult.class, visitor);
+		getMapper().acceptJsonFormatVisitor(com.yelloowstone.nf2t.cli.FlowFileStreamResult.class, visitor);
 		JsonSchema personSchema = visitor.finalSchema();
 		String result = getMapper().writer().writeValueAsString(personSchema);
 		getSpec().commandLine().getOut().println(result);

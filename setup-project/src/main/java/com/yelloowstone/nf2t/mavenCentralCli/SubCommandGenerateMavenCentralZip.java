@@ -139,7 +139,7 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 			if (!Files.isRegularFile(artifactPath)) {
 				System.err.println("Could not find required artifact (" + entry.getKey()
 						+ "). Consult with pom.xml file to determine why this file was not created. " + artifactPath);
-				return 0;
+				return 1;
 			}
 		}
 
