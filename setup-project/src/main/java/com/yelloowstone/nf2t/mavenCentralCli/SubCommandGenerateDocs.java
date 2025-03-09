@@ -32,10 +32,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @Command(name = "docs", description = "Packages documentation, including ManPages, and JavaDocs.")
-public class SubCommandGenerateDocs extends AbstractSubCommandSetupProject {
-
-
-	
+public class SubCommandGenerateDocs extends AbstractSubCommand {
 
 	public SubCommandGenerateDocs() throws ParserConfigurationException, IOException {
 		super();
@@ -79,7 +76,8 @@ public class SubCommandGenerateDocs extends AbstractSubCommandSetupProject {
 		return cfg;
 	}
 
-	private int buildIndex(final Path outPath, final Configuration configuration, final List<MavenProject> mavenProjects) {
+	private int buildIndex(final Path outPath, final Configuration configuration,
+			final List<MavenProject> mavenProjects) {
 		try {
 			final Map<String, Object> data = new HashMap<String, Object>();
 			data.put("mavenProjects", mavenProjects);
@@ -219,17 +217,18 @@ public class SubCommandGenerateDocs extends AbstractSubCommandSetupProject {
 			manPaths.sort((a, b) -> {
 				return a.getValue().length() - b.getValue().length();
 			});
-						
+
 			final Entry<Path, String> mainCommand = manPaths.get(0);
-			
+
 			for (Entry<Path, String> entry : manPaths) {
 				final Path path = entry.getKey();
-				
-				if(mainCommand.getValue().length() != entry.getValue().length()) {
-					final String command = entry.getValue().substring(mainCommand.getValue().length() + 1, entry.getValue().length());
+
+				if (mainCommand.getValue().length() != entry.getValue().length()) {
+					final String command = entry.getValue().substring(mainCommand.getValue().length() + 1,
+							entry.getValue().length());
 					System.out.println("Parsed Command: " + command);
 				}
-				
+
 				final String htmlFileName = entry.getValue() + ".html";
 
 				try {
@@ -320,16 +319,17 @@ public class SubCommandGenerateDocs extends AbstractSubCommandSetupProject {
 						Files.createDirectories(entryPath);
 					} else {
 						Files.createDirectories(entryPath.getParent()); // Ensure parent dirs exist
-                        Files.copy(zipIn, entryPath, StandardCopyOption.REPLACE_EXISTING); //Corrected line
+						Files.copy(zipIn, entryPath, StandardCopyOption.REPLACE_EXISTING); // Corrected line
 					}
 					zipIn.closeEntry();
 					entry = zipIn.getNextEntry();
 				} catch (Exception e) {
-					System.err.println("Could not parse JavaDoc Jar: " + javaDocJarPath + ". Entry: " + entry.getName());
+					System.err
+							.println("Could not parse JavaDoc Jar: " + javaDocJarPath + ". Entry: " + entry.getName());
 					e.printStackTrace();
 					return 1;
 				}
-				
+
 			}
 		} catch (Exception e) {
 			System.err.println("Could not parse JavaDoc Jar: " + javaDocJarPath);
@@ -343,19 +343,20 @@ public class SubCommandGenerateDocs extends AbstractSubCommandSetupProject {
 	private int buildArtifact(final Path artifactsPath, final MavenProject mavenProject, final String artifactName) {
 		final Path artifactPath = mavenProject.getProjectPath().resolve("target").resolve(artifactName);
 		final Path newArtifactPath = artifactsPath.resolve(artifactName);
-		
-		try{
+
+		try {
 			Files.deleteIfExists(newArtifactPath);
 			Files.copy(artifactPath, newArtifactPath);
-		} catch(Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return 1;
 		}
-		
+
 		return 0;
 	}
-	
-	private int buildArtifacts(final Path projectPath, final Configuration configuration, final MavenProject mavenProject) {
+
+	private int buildArtifacts(final Path projectPath, final Configuration configuration,
+			final MavenProject mavenProject) {
 		final Path artifactsPath = projectPath.resolve("artifacts");
 
 		try {
@@ -364,17 +365,17 @@ public class SubCommandGenerateDocs extends AbstractSubCommandSetupProject {
 			e.printStackTrace();
 			return 1;
 		}
-		
-		for(final Entry<String, String> entry: mavenProject.getMavenCentralArtifactNames().entrySet()) {
+
+		for (final Entry<String, String> entry : mavenProject.getMavenCentralArtifactNames().entrySet()) {
 			final String artifactName = entry.getValue();
 			buildArtifact(artifactsPath, mavenProject, artifactName);
 		}
-		
+
 		buildArtifact(artifactsPath, mavenProject, mavenProject.getMavenCentralArtifactName());
-		
+
 		return 0;
 	}
-	
+
 	public Integer packageDocumentation(final Path outPath, final Configuration configuration,
 			final MavenProject mavenProject) {
 		final Path projectPath = outPath.resolve(mavenProject.getMavenArtifact().getArtifactId());
@@ -386,22 +387,23 @@ public class SubCommandGenerateDocs extends AbstractSubCommandSetupProject {
 			return 1;
 		}
 
-		System.out.println(ConsoleColors.PURPLE + "Starting Project: " + mavenProject.getProjectName() + ConsoleColors.RESET);
-		
+		System.out.println(
+				ConsoleColors.PURPLE + "Starting Project: " + mavenProject.getProjectName() + ConsoleColors.RESET);
+
 		try {
 			int buildArtifactsResult = buildArtifacts(projectPath, configuration, mavenProject);
 			if (buildArtifactsResult != 0)
 				return buildArtifactsResult;
-						
+
 			int buildIndexResult = buildProjectIndex(projectPath, configuration, mavenProject);
 			if (buildIndexResult != 0)
 				return buildIndexResult;
-			if(mavenProject.isPicocli()) {
+			if (mavenProject.isPicocli()) {
 				int buildManPageResult = buildManPage(projectPath, configuration, mavenProject);
 				if (buildManPageResult != 0)
 					return buildIndexResult;
 			}
-			
+
 			int buildJavaDocsResult = buildJavaDocs(projectPath, configuration, mavenProject);
 			if (buildJavaDocsResult != 0)
 				return buildIndexResult;
@@ -410,8 +412,9 @@ public class SubCommandGenerateDocs extends AbstractSubCommandSetupProject {
 			e.printStackTrace();
 			return 1;
 		}
-		
-		System.out.println(ConsoleColors.YELLOW + "Created Project: " + mavenProject.getProjectName() + ConsoleColors.RESET);
+
+		System.out.println(
+				ConsoleColors.YELLOW + "Created Project: " + mavenProject.getProjectName() + ConsoleColors.RESET);
 
 		return 0;
 	}
@@ -443,13 +446,15 @@ public class SubCommandGenerateDocs extends AbstractSubCommandSetupProject {
 			}
 		}
 
-		System.out.println(ConsoleColors.GREEN + "Documentation Zip generated at " + distPath.toAbsolutePath() + ConsoleColors.RESET);
-	
+		System.out.println(ConsoleColors.GREEN + "Documentation Zip generated at " + distPath.toAbsolutePath()
+				+ ConsoleColors.RESET);
+
 		return 0;
 	}
 
 	public static void main(String[] args) throws ParserConfigurationException, IOException {
-		int rc = new CommandLine(new SubCommandGenerateDocs()).execute(new String[] {"--gpgUser", "0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73", "--workdir", "..", "setup-project", "nf2t-cli"});
+		int rc = new CommandLine(new SubCommandGenerateDocs()).execute(new String[] { "--gpgUser",
+				"0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73", "--workdir", "..", "setup-project", "nf2t-cli" });
 		System.exit(rc);
 	}
 }

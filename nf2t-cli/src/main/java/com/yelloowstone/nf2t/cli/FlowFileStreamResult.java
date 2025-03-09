@@ -107,7 +107,6 @@ public class FlowFileStreamResult {
 		this.keepAttributes = keepAttributes;
 	}
 
-	
 	public int getVersion() {
 		return version;
 	}

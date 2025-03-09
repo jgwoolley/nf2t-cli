@@ -22,10 +22,9 @@ import org.xml.sax.SAXException;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @Command(name = "mavenCentral", description = "Packages Maven packages meant for the Maven Central Repository.")
-public class SubCommandGenerateMavenCentralZip extends AbstractSubCommandSetupProject {
+public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 
 	private Integer signArtifact(final String gpgUser, final MavenProject project, final ZipOutputStream zos,
 			final Path artifactPath) throws IOException {
@@ -207,14 +206,14 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommandSetupPr
 				return returnCode;
 			}
 		}
-		
+
 		return 0;
 	}
 
 	public static void main(String[] args) throws ParserConfigurationException, IOException {
-		int rc = new CommandLine(new SubCommandGenerateMavenCentralZip()).execute(new String[] {"--gpgUser", "0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73","--workdir", "..","setup-project", "nf2t-cli"});
+		int rc = new CommandLine(new SubCommandGenerateMavenCentralZip()).execute(new String[] { "--gpgUser",
+				"0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73", "--workdir", "..", "setup-project", "nf2t-cli" });
 		System.exit(rc);
 	}
-
 
 }

@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-public abstract class AbstractSubCommandSetupProject implements Callable<Integer> {
+public abstract class AbstractSubCommand implements Callable<Integer> {
 
 	@Option(names = { "-w",
 			"--workdir" }, description = "The Working directory, which helps to determine the default paths of other arguments.", defaultValue = ".")

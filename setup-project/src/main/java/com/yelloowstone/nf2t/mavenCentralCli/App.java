@@ -10,7 +10,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
-@Command(name = "Build Maven Central Zip", subcommands = { SubCommandGenerateDocs.class })
+@Command(name = "Build Maven Central Zip", subcommands = { SubCommandGenerateDocs.class, SubCommandGenerateMavenCentralZip.class })
 public class App implements Callable<Integer> {
 
 	@Spec
