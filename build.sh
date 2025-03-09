@@ -24,4 +24,4 @@ fi
 
 rm -rf ./dist
 
-java -jar setup-project/target/setup-project-${version}.jar docs --picocli setup-project --picocli nf2t-cli --commitURL https://github.com/jgwoolley/nf2t-cli/commit/
+java -jar setup-project/target/setup-project-${version}.jar docs setup-project nf2t-cli

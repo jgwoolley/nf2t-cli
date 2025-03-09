@@ -7,31 +7,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Model;
+
 public class MavenProject {
 	private final Instant buildTime;
-	private final MavenProjectType projectType;
 	private final Path projectPath;
-	private final MavenArtifact mavenArtifact;
+	private final Model mavenArtifact;
 	private final String gitHash;
-	private final String commitURL;
 
-	public MavenProject(Instant buildTime, MavenProjectType projectType, Path projectPath, MavenArtifact mavenArtifact,
-			String gitHash, String commitURL) {
+	public MavenProject(Instant buildTime, Path projectPath, Model mavenArtifact,
+			String gitHash) {
 		super();
 		this.buildTime = buildTime;
-		this.projectType = projectType;
 		this.projectPath = projectPath;
 		this.mavenArtifact = mavenArtifact;
 		this.gitHash = gitHash;
-		this.commitURL = commitURL;
 	}
 
 	public Instant getBuildTime() {
 		return buildTime;
-	}
-
-	public MavenProjectType getProjectType() {
-		return projectType;
 	}
 
 	public Path getProjectPath() {
@@ -42,7 +37,7 @@ public class MavenProject {
 		return getMavenArtifact().getName();
 	}
 
-	public MavenArtifact getMavenArtifact() {
+	public Model getMavenArtifact() {
 		return mavenArtifact;
 	}
 
@@ -51,27 +46,104 @@ public class MavenProject {
 	}
 
 	public String getCommitURL() {
-		return commitURL;
+		final Object result = getMavenArtifact().getProperties().get("yelloowstone.commitURL");
+		if(result == null) {
+			return null;
+		}
+		
+		return result.toString();
 	}
 
+	public String getFileName(String postfix) {
+		return getMavenArtifact().getArtifactId() + "-" + getMavenArtifact().getVersion() + postfix;
+	}
+
+	public String getCoordinate() {
+		return getMavenArtifact().getGroupId() + ":" + getMavenArtifact().getArtifactId() + ":" + getMavenArtifact().getPackaging() + ":" + getMavenArtifact().getVersion();
+	};
+
+	public String getMavenCentralZipEntryPrefix() {
+		final StringBuilder sb = new StringBuilder("/");
+		for (final String name : this.getMavenArtifact().getGroupId().split("\\.")) {
+			sb.append(name);
+			sb.append("/");
+		}
+		sb.append(this.getMavenArtifact().getArtifactId());
+		sb.append("/");
+
+		sb.append(this.getMavenArtifact().getVersion());
+		sb.append("/");
+
+		return sb.toString();
+	}
+	
+	public String getJarFileName() {
+		return getFileName(".jar");
+	};
+
+	public String getJavaDocFileName() {
+		return getFileName("-javadoc.jar");
+	};
+
+	public String getSourcesFileName() {
+		return getFileName("-sources.jar");
+	};
+
+	public String getEffectivePomFileName() {
+		return getFileName(".pom");
+	};
+	
+	public Map<String, String> getMavenCentralArtifactNames() {
+		return Map.of("Jar", getJarFileName(), "JavaDoc", getJavaDocFileName(), "Source", getSourcesFileName(), "Pom", getEffectivePomFileName());
+	}
+		
+	
+	public String getMavenCentralArtifactName() {
+		return getFileName(".maven.zip");
+	}
+	
+	public boolean hasDependency(final String groupId, final String artifactId, final String version) {
+		for(final Dependency dependency: getMavenArtifact().getDependencies()) {
+			if(groupId != null && !dependency.getGroupId().equals(groupId)) {
+				continue;
+			}
+			
+			if(artifactId != null && !dependency.getArtifactId().equals(artifactId)) {
+				continue;
+			}
+			
+			if(version != null && !dependency.getVersion().equals(version)) {
+				continue;
+			}
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean isPicocli() {
+		return hasDependency("info.picocli", "picocli", null);
+	}
+	
 	public Map<String, Object> getDataModel() {
 		final Map<String, Object> dataModel = new HashMap<>();
 		dataModel.put("mavenProject", this);
 
-		final MavenArtifact artifact = this.getMavenArtifact();
+		final Model artifact = this.getMavenArtifact();
 		
 		final List<MavenProjectProperty> properties = new ArrayList<>();
 		properties.add(new MavenProjectProperty("Build Time", this.getBuildTime().toString()));
 
 		if(this.getGitHash() != null) {
-			if(this.commitURL == null) {
+			if(this.getCommitURL() == null) {
 				properties.add(new MavenProjectProperty("Git Hash", this.getGitHash()));
 			} else {
-				properties.add(new MavenProjectProperty("Git Hash", this.getGitHash(), this.commitURL + this.getGitHash()));
+				properties.add(new MavenProjectProperty("Git Hash", this.getGitHash(), this.getCommitURL() + this.getGitHash()));
 			}
 		}
 		
-		properties.add(new MavenProjectProperty("Maven Coordinate", artifact.getCoordinate()));
+		properties.add(new MavenProjectProperty("Maven Coordinate", getCoordinate()));
 		properties.add(new MavenProjectProperty("Maven Artifact Name", artifact.getName()));
 		properties.add(new MavenProjectProperty("Maven Artifact Id", artifact.getArtifactId()));
 		properties.add(new MavenProjectProperty("Maven Artifact Group Id", artifact.getGroupId()));
@@ -79,15 +151,19 @@ public class MavenProject {
 		properties.add(new MavenProjectProperty("Maven Artifact Packaging", artifact.getPackaging()));
 		properties.add(new MavenProjectProperty("JavaDocs URL", "./javadoc/index.html", "./javadoc/index.html"));
 		
-		if(this.projectType == MavenProjectType.PICOCLI) {
+		final boolean isPicocli = artifact.getDependencies().stream().filter(x -> {
+			return x.getArtifactId().equals("picocli") && x.getGroupId().equals("info.picocli");
+		}).count() > 0;		
+		
+		if(isPicocli) {
 			properties.add(new MavenProjectProperty("Man Page URL", "./man/index.html", "./man/index.html"));
 		}
 		
-		this.getMavenArtifact().getMavenCentralArtifactNames().entrySet().stream().sorted((a, b) -> a.getKey().compareTo(b.getKey())).forEach(x -> {
+		getMavenCentralArtifactNames().entrySet().stream().sorted((a, b) -> a.getKey().compareTo(b.getKey())).forEach(x -> {
 			properties.add(new MavenProjectProperty(x.getKey(), "./artifacts/" + x.getValue(), "./artifacts/" + x.getValue()));
 		});
 
-		properties.add(new MavenProjectProperty("Maven Central Zip", "./artifacts/" + artifact.getMavenCentralArtifactName(), "./artifacts/" + artifact.getMavenCentralArtifactName()));
+		properties.add(new MavenProjectProperty("Maven Central Zip", "./artifacts/" + getMavenCentralArtifactName(), "./artifacts/" + getMavenCentralArtifactName()));
 		
 		dataModel.put("properties", properties);
 
@@ -100,6 +176,6 @@ public class MavenProject {
 
 	@Override
 	public String toString() {
-		return "MavenProject [projectPath=" + projectPath + ", mavenArtifact=" + mavenArtifact + "]";
+		return "MavenProject [projectPath=" + projectPath + ", mavenArtifact=" + mavenArtifact.getArtifactId() + "]";
 	}
 }
