@@ -9,7 +9,7 @@ A Java CLI for parsing Apache NiFi FlowFileStreams. One or more FlowFiles can be
 
 * link:https://www.nf2t.net/[Web Gui Version]
 ifdef::env-github[]
-* link:https://jgwoolley.github.io/nf2t-cli/man/[Usage Guide].
+* link:https://jgwoolley.github.io/nf2t-cli/nf2t-cli/man/[Usage Guide].
 endif::[]
 ifndef::env-github[]
 * link:./man/index.html[Usage Guide].
@@ -17,7 +17,7 @@ endif::[]
 * link:https://github.com/jgwoolley/nf2t-cli[Source Code].
 * link:https://jgwoolley.github.io/nf2t-cli/[Documentation].
 ifdef::env-github[]
-* link:https://jgwoolley.github.io/nf2t-cli/javadocs/[Javadocs].
+* link:https://jgwoolley.github.io/nf2t-cli/nf2t-cli/javadoc/[Javadocs].
 endif::[]
 ifndef::env-github[]
 * link:./javadocs/index.html[Javadocs].
@@ -57,18 +57,30 @@ I've developed several versions of this project over the years, and created a We
 * link:./test.sh[test.sh]: After running the build script, will test the executable jar.
 
 == TODO
-** Move to another seperate project?
-* Add link:https://picocli.info/man/picocli.AutoComplete.html[AutoComplete].
-** java -cp nf2t-cli-0.0.9-SNAPSHOT.jar picocli.AutoComplete -n nf2t com.yelloowstone.nf2t.cli.App
+
 * Add SLF4J Logging
-* link:https://gist.github.com/timbuethe/7becdc4556225e7c5b7b[]
+
+== nf2t-cli
+
 * In the link:test.sh[] example the FlowFile path is "./quick_test//2/data.flowfilev3" which the /2/data.flowfilev3 seems to be refering to the path in the ZIP file.
 * Can pass variables with asciidoc link:https://stackoverflow.com/questions/63622953/asciidoctor-activate-substitution-in-cli-attributes[]
 * Remove concept of version as provided by CLI arg, or make version and prefix additional options for configuring how FlowFileStream(s) are parsed.
 * Add a seperate file metadata section w/ uuids, and connect parents w/ uuids, and flowfiles to uuids
-* Add JavaDocs Comments to page to stop "warning: no comment" errors.
 * Figure out why progress bars are still appearing even though i added the argument to mvn clean install.
 * Get Favicons into manpages.
-* link:https://docs.asciidoctor.org/asciidoc/latest/docinfo/#head[].
 * Review the standard implementation, make sure this implementation is as similiar as possible: link:https://github.com/apache/nifi/blob/main/nifi-commons/nifi-flowfile-packager/src/main/java/org/apache/nifi/util/Unpackage.java[].
 * Always say unpackage before package reflecting its primacy.
+
+== setup-projecet
+
+** Add ability to specify a name and description of main documentation index?
+** Move to another seperate project?
+* https://picocli.info/autocomplete.html
+** java -cp nf2t-cli-0.0.9-SNAPSHOT.jar picocli.AutoComplete -n nf2t com.yelloowstone.nf2t.cli.App
+* Add JavaDocs Comments to page to stop "warning: no comment" errors.
+* Add link:https://picocli.info/man/picocli.AutoComplete.html[AutoComplete].
+* link:https://docs.asciidoctor.org/asciidoc/latest/docinfo/#head[].
+
+== nf2t-javafx
+
+* link:https://gist.github.com/timbuethe/7becdc4556225e7c5b7b[]
