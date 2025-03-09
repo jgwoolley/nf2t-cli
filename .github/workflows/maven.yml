@@ -45,7 +45,7 @@ jobs:
     - name: Build Project
       run: bash build.sh server
     - name: Run Tests
-      run: bash tests.sh
+      run: bash test.sh
     - name: Setup Pages
       uses: actions/configure-pages@v3
     - name: Upload artifact
