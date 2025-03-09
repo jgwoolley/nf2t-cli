@@ -13,18 +13,24 @@ import org.apache.maven.model.Model;
 public class MavenProject {
 	public static final String MAVEN_CENTRAL_ARTIFACT_KEY = "Maven Central Zip";
 	
+	private final boolean resolvePom;
 	private final Instant buildTime;
 	private final Path projectPath;
 	private final Model mavenArtifact;
 	private final String gitHash;
 
-	public MavenProject(Instant buildTime, Path projectPath, Model mavenArtifact,
+	public MavenProject(boolean resolvePom, Instant buildTime, Path projectPath, Model mavenArtifact,
 			String gitHash) {
 		super();
+		this.resolvePom = resolvePom;
 		this.buildTime = buildTime;
 		this.projectPath = projectPath;
 		this.mavenArtifact = mavenArtifact;
 		this.gitHash = gitHash;
+	}
+
+	public boolean isResolvePom() {
+		return resolvePom;
 	}
 
 	public Instant getBuildTime() {
@@ -172,8 +178,8 @@ public class MavenProject {
 		return dataModel;
 	}
 
-	public Path getTargetPath() {
-		return projectPath.resolve("target");
+	public Path getArtifactParent() {
+		return isResolvePom() ? projectPath.resolve("target") : projectPath;
 	}
 
 	@Override

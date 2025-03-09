@@ -166,15 +166,13 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			return 1;
 		}
 
-		final Path projectPath = mavenProject.getProjectPath();
-
-		final Path targetPath = projectPath.resolve("target");
-		if (!Files.isDirectory(targetPath)) {
-			new Exception("Path must be a directory: " + targetPath).printStackTrace();
+		final Path artifactParent = mavenProject.getArtifactParent();
+		if (!Files.isDirectory(artifactParent)) {
+			new Exception("Path must be a directory: " + artifactParent).printStackTrace();
 			return 1;
 		}
 
-		final Path jarPath = targetPath.resolve(mavenProject.getFileName(".jar"));
+		final Path jarPath = artifactParent.resolve(mavenProject.getFileName(".jar"));
 		if (!Files.isRegularFile(jarPath)) {
 			new Exception("Path must be a file: " + jarPath).printStackTrace();
 			return 1;
@@ -265,9 +263,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			return 1;
 		}
 
-		final Path projectPath = mavenProject.getProjectPath();
-
-		final Path targetPath = projectPath.resolve("target");
+		final Path targetPath = mavenProject.getArtifactParent();
 		if (!Files.isDirectory(targetPath)) {
 			new Exception("Given Target path was not a directory: " + targetPath).printStackTrace();
 			return 1;
@@ -342,7 +338,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 
 	private Path buildArtifact(final Path artifactsPath, final MavenProject mavenProject,
 			final String artifactFilename) {
-		final Path artifactPath = mavenProject.getProjectPath().resolve("target").resolve(artifactFilename);
+		final Path artifactPath = mavenProject.getArtifactParent().resolve(artifactFilename);
 
 		if (!Files.isRegularFile(artifactPath)) {
 			System.err.println("Could not find artifact: " + artifactPath);

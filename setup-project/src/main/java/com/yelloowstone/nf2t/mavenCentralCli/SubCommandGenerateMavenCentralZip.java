@@ -123,8 +123,7 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 
 	private Integer packageProject(final String gpgUser, final MavenProject project, final ZipOutputStream zos) {
 
-		final Path projectPath = project.getProjectPath();
-		final Path targetPath = projectPath.resolve("target");
+		final Path targetPath = project.getArtifactParent();
 		if (!Files.isDirectory(targetPath)) {
 			System.err.println("Path must be a directory: " + targetPath);
 			return 1;
@@ -155,7 +154,7 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 				}
 			}
 		} catch (Exception e) {
-			System.err.println("Could not write ZipEntry.");
+			System.err.println("Could not write ZipEntrytrue.");
 			e.printStackTrace();
 			return 1;
 		}
@@ -167,8 +166,7 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 		if (gpgUser == null) {
 			System.err.println("GPG User not specified. This will result in an invalid Maven Central ZIP.");
 		}
-		final Path projectPath = project.getProjectPath();
-		final Path targetPath = projectPath.resolve("target");
+		final Path targetPath = project.getArtifactParent();
 		if (!Files.isDirectory(targetPath)) {
 			System.err.println("Path must be a directory: " + targetPath);
 			return 1;
@@ -211,8 +209,10 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 	}
 
 	public static void main(String[] args) throws ParserConfigurationException, IOException {
-		int rc = new CommandLine(new SubCommandGenerateMavenCentralZip()).execute(new String[] { "--gpgUser",
-				"0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73", "--workdir", "..", "setup-project", "nf2t-cli" });
+		int rc = new CommandLine(new SubCommandGenerateMavenCentralZip())
+				.execute(new String[] { "--resolveStragety", "GENERATE",
+						"--gpgUser", "0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73", "--workdir", "..", "setup-project",
+						"nf2t-cli" });
 		System.exit(rc);
 	}
 

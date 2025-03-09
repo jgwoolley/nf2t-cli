@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -14,11 +15,22 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 public class MavenUtils {
 	
-	public static Model parseMavenArtifact(final Path projectPath) {
+	public static Model parseEffectivePom(final Path artifactPath) {
+		try (FileReader reader = new FileReader(artifactPath.toFile())) {
+            MavenXpp3Reader mavenReader = new MavenXpp3Reader();
+            return mavenReader.read(reader);            
+		} catch(IOException | XmlPullParserException e) {
+			System.err.println("Could not parse pom.xml: " + artifactPath);
+            e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public static Model generateEffectivePom(final Path projectPath) {
 		final Path targetPath = projectPath.resolve("target");
 		if (!Files.isDirectory(targetPath)) {
 			System.err.println(
-					"Could not create effective pom. Target directory does not exist. Use \"mvn\" command to build artifacts if you haven't already. ["
+					"Target directory does not exist. Use \"mvn\" command to build artifacts if you haven't already. ["
 							+ targetPath.toAbsolutePath() + "]");
 			return null;
 		}
@@ -44,15 +56,7 @@ public class MavenUtils {
 			return null;
 		}
 		
-		Model model;
-		try (FileReader reader = new FileReader(artifactPath.toFile())) {
-            MavenXpp3Reader mavenReader = new MavenXpp3Reader();
-            model = mavenReader.read(reader);            
-		} catch(IOException | XmlPullParserException e) {
-			System.err.println("Could not parse pom.xml: " + artifactPath);
-            e.printStackTrace();
-			return null;
-		}
+		Model model = parseEffectivePom(artifactPath);
 		
         final Path newArtifactPath = targetPath.resolve(MavenUtils.getFileName(model, ".pom"));
 		
@@ -70,25 +74,44 @@ public class MavenUtils {
         return model;
 	}
 	
-	public static MavenProject parseMavenProject(final Instant buildTime, final Path projectPath) {
+	public static Model findEffectivePom(final Path projectPath) {
+		final List<Path> pomPaths;
+		try {
+			pomPaths = Files.list(projectPath).filter(x -> x.toString().endsWith(".pom")).collect(Collectors.toList());
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		if(pomPaths.size() == 0) {
+			new Exception("Only one .pom file must exist in the directory: " + projectPath + ". The following .pom file(s) were found: " + pomPaths + ".").printStackTrace();
+			return null;
+		}
+		
+		final Path pomPath = pomPaths.get(0);
+		
+		return parseEffectivePom(pomPath);
+	}
+	
+	public static MavenProject parseMavenProject(final boolean resolvePom, final Instant buildTime, final Path projectPath) {
 
-		final Model artifact = MavenUtils.parseMavenArtifact(projectPath);
+		final Model artifact = resolvePom ? MavenUtils.generateEffectivePom(projectPath) : MavenUtils.findEffectivePom(projectPath);
 		if (artifact == null) {
 			return null;
 		}
 		
 		final String gitHash = GitUtils.createGitHash(projectPath);
 				
-		return new MavenProject(buildTime, projectPath, artifact, gitHash);
+		return new MavenProject(resolvePom, buildTime, projectPath, artifact, gitHash);
 	}
 	
-	public static List<MavenProject> parseMavenProjects(final Path[] paths) {
+	public static List<MavenProject> parseMavenProjects(final boolean resolvePom, final Path[] paths) {
 		final List<MavenProject> projects = new ArrayList<>();
 		
 		final Instant buildTime = Instant.now();
 				
 		for(final Path projectPath: paths) {
-			final MavenProject project = parseMavenProject(buildTime, projectPath);
+			final MavenProject project = parseMavenProject(resolvePom, buildTime, projectPath);
 			if(project == null) {
 				System.err.println("Could not process project: " + projectPath);
 				return null;

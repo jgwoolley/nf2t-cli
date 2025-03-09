@@ -17,6 +17,10 @@ public abstract class AbstractSubCommand implements Callable<Integer> {
 			"The local GPG user that will be fed into GPG command." })
 	private String gpgUser;
 
+	@Option(names = { "--resolveStragety", "-r" }, defaultValue = "GENERATE", description = {
+	"When run in resolve pom mode, will generate effective pom from pom.xml, and will look for artifacts in targets folder. When disabled will only look for artifacts in root folder." })
+	private MavenProjectArtifactResolveStragety resolvePom;
+	
 	@Parameters(description = "The directories of the Maven projects to process, relative to the working directory.", defaultValue = ".")
 	private String[] projectDirNames;
 
@@ -28,10 +32,12 @@ public abstract class AbstractSubCommand implements Callable<Integer> {
 		return gpgUser;
 	}
 
-
-
 	public String[] getProjectDirNames() {
 		return projectDirNames;
+	}
+	
+	public boolean isResolvePom() {
+		return MavenProjectArtifactResolveStragety.GENERATE == resolvePom;
 	}
 
 	public Path[] getInputPaths() {
@@ -47,7 +53,7 @@ public abstract class AbstractSubCommand implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws Exception {
-		final List<MavenProject> mavenProjects = MavenUtils.parseMavenProjects(getInputPaths());
+		final List<MavenProject> mavenProjects = MavenUtils.parseMavenProjects(isResolvePom(), getInputPaths());
 		if(mavenProjects == null) {
 			return 1;
 		}
