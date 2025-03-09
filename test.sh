@@ -6,9 +6,9 @@ cd ./nf2t-cli
 
 # Evaluate Maven Coordinates
 
-mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp
-mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp
-mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp
+mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp --quiet
+mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp --quiet
+mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp --quiet
 
 groupId=$(cat groupId.mvnhelp)
 artifactId=$(cat artifactId.mvnhelp)
@@ -44,9 +44,9 @@ cd ../setup-project
 
 # Evaluate Maven Coordinates
 
-mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp
-mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp
-mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp
+mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp --quiet
+mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp --quiet
+mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp --quiet
 
 groupId=$(cat groupId.mvnhelp)
 artifactId=$(cat artifactId.mvnhelp)
