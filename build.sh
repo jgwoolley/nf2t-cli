@@ -13,7 +13,7 @@ pwd
 
 echo "Running mvn install"
 
-if [ "$1" == "server" ]; then
+if [ "${1:=""}" == "server" ]; then
     mvn install --quiet
 else
     mvn install
