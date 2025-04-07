@@ -1,3 +1,8 @@
+#!/usr/bin/env bash
+
+# See https://www.youtube.com/watch?v=9fSkygQ-ZjI
+set -euxo pipefail
+
 rm -rf ~/.m2/repository/
 
 cd ./nf2t-cli
