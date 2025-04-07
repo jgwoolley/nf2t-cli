@@ -41,13 +41,13 @@ public class SubCommandValidateNar implements Callable<Integer>, IVersionProvide
 				return 1;
 			}
 
-			try (InputStream fileInputStream = Files.newInputStream(narPath);
-					BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-					ZipInputStream zin = new ZipInputStream(bufferedInputStream)) {
+			try (final InputStream fileInputStream = Files.newInputStream(narPath);
+					final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+					final ZipInputStream zin = new ZipInputStream(bufferedInputStream)) {
 
 				ZipEntry ze;
 				while ((ze = zin.getNextEntry()) != null) {
-					String name = ze.getName();
+					final String name = ze.getName();
 
 					if (!"META-INF/docs/extension-manifest.xml".equals(name)) {
 						continue;
@@ -60,31 +60,32 @@ public class SubCommandValidateNar implements Callable<Integer>, IVersionProvide
 							outputStream.write(buffer, 0, len);
 						}
 
-						ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
+						final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
 								outputStream.toByteArray());
 
-						DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-						DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-						Document document = dBuilder.parse(byteArrayInputStream);
+						final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+						final DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+						final Document document = dBuilder.parse(byteArrayInputStream);
 
-						NodeList nodeList = document.getElementsByTagName("systemApiVersion");
-						Element element = (Element) nodeList.item(0);
+						final NodeList nodeList = document.getElementsByTagName("systemApiVersion");
+						final Element element = (Element) nodeList.item(0);
 
 						System.out.println("NiFi Version: " + element.getTextContent());
 
-						NodeList extensionsNodeList = document.getElementsByTagName("extensions");
-						Element extensionsNode = (Element) extensionsNodeList.item(0);
+						final NodeList extensionsNodeList = document.getElementsByTagName("extensions");
+						final Element extensionsNode = (Element) extensionsNodeList.item(0);
 
-						NodeList extensionNodeList = extensionsNode.getElementsByTagName("extension");
+						final NodeList extensionNodeList = extensionsNode.getElementsByTagName("extension");
 						for (int index = 0; index < extensionNodeList.getLength(); index++) {
-							Element extensionElement = (Element) extensionNodeList.item(index);
-							NodeList nameNodeList = extensionElement.getElementsByTagName("name");
-							Element extensionNameElement = (Element) nameNodeList.item(0);
-							
-							NodeList extensionTypeNodeList = extensionElement.getElementsByTagName("type");
-							Element extensionTypeElement = (Element) extensionTypeNodeList.item(0);			
-							
-							System.out.println(extensionTypeElement.getTextContent() + " " + extensionNameElement.getTextContent());
+							final Element extensionElement = (Element) extensionNodeList.item(index);
+							final NodeList nameNodeList = extensionElement.getElementsByTagName("name");
+							final Element extensionNameElement = (Element) nameNodeList.item(0);
+
+							final NodeList extensionTypeNodeList = extensionElement.getElementsByTagName("type");
+							final Element extensionTypeElement = (Element) extensionTypeNodeList.item(0);
+
+							System.out.println(extensionTypeElement.getTextContent() + " "
+									+ extensionNameElement.getTextContent());
 						}
 
 					}
@@ -93,7 +94,6 @@ public class SubCommandValidateNar implements Callable<Integer>, IVersionProvide
 				e.printStackTrace();
 				return 1;
 			}
-
 		}
 
 		return 0;
