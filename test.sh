@@ -41,24 +41,24 @@ tar czf "$TEST_PATH/3/test.tar.gz" "$TEST_PATH/2/data.flowfilev3"
 
 java -jar "./target/${prefix_name}.jar" "unpackage" "--in" "$TEST_PATH/3/test.tar.gz" "--out" "$TEST_PATH/4" "--results" "$TEST_PATH/5"
 
-# Setup Project Tests
+# # Setup Project Tests
 
-cd ../setup-project
+# cd ../setup-project
 
-# Evaluate Maven Coordinates
+# # Evaluate Maven Coordinates
 
-mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp --quiet
-mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp --quiet
-mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp --quiet
+# mvn help:evaluate -Dexpression=project.groupId -Doutput=groupId.mvnhelp --quiet
+# mvn help:evaluate -Dexpression=project.artifactId -Doutput=artifactId.mvnhelp --quiet
+# mvn help:evaluate -Dexpression=project.version -Doutput=version.mvnhelp --quiet
 
-groupId=$(cat groupId.mvnhelp)
-artifactId=$(cat artifactId.mvnhelp)
-version=$(cat version.mvnhelp)
+# groupId=$(cat groupId.mvnhelp)
+# artifactId=$(cat artifactId.mvnhelp)
+# version=$(cat version.mvnhelp)
 
-rm *.mvnhelp
+# rm *.mvnhelp
 
-# Create Variables
+# # Create Variables
 
-prefix_name="${artifactId}-${version}"
+# prefix_name="${artifactId}-${version}"
 
-java -jar ./target/${prefix_name}.jar docs --resolveStragety EXISTING --workdir .. setup-project/target nf2t-cli/target
+# java -jar ./target/${prefix_name}.jar docs --resolveStragety EXISTING --workdir .. setup-project/target nf2t-cli/target

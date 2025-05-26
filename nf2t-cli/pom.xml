@@ -6,12 +6,12 @@
 	<parent>
 		<groupId>com.yelloowstone.nf2t</groupId>
 		<artifactId>nf2t-parent</artifactId>
-		<version>0.0.13-SNAPSHOT</version>
+		<version>0.1.1-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<artifactId>nf2t-cli</artifactId>
 	<packaging>jar</packaging>
-	<name>NiFi FlowFile Tools CLI</name>
+	<name>NiFi FlowFile Tools CLI (Uber Jar)</name>
 	<description>A Java CLI for parsing Apache NiFi FlowFiles.</description>
 	<url>https://github.com/jgwoolley/nf2t-cli</url>
 
@@ -46,56 +46,12 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-nop</artifactId>
-			<version>2.0.16</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.nifi</groupId>
-			<artifactId>nifi-expression-language</artifactId>
-			<version>1.23.2</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.nifi</groupId>
-			<artifactId>nifi-flowfile-packager</artifactId>
-			<version>1.23.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.nifi</groupId>
-			<artifactId>nifi-utils</artifactId>
-			<version>1.23.2</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.15.3</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.module</groupId>
-			<artifactId>jackson-module-jsonSchema</artifactId>
-			<version>2.18.2</version>
-		</dependency>
-		<dependency>
-			<groupId>info.picocli</groupId>
-			<artifactId>picocli</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>info.picocli</groupId>
-			<artifactId>picocli-codegen</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.tika</groupId>
-			<artifactId>tika-core</artifactId>
-			<version>2.9.2</version>
+			<groupId>com.yelloowstone.nf2t</groupId>
+			<artifactId>nf2t-lib</artifactId>
+			<version>0.1.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<build>
-
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
