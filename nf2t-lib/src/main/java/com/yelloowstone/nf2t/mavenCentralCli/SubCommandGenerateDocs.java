@@ -31,6 +31,7 @@ import freemarker.template.TemplateExceptionHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
+import com.yelloowstone.nf2t.cli.App;
 import com.yelloowstone.nf2t.maven.MavenProject;
 import com.yelloowstone.nf2t.utils.ProcessUtils;
 

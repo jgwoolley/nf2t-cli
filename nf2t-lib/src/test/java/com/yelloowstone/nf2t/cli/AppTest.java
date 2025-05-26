@@ -41,7 +41,7 @@ public class AppTest {
 			final Path contentPath = environment.getContentPath();
 			final Path packagedPath = environment.getPackagedPath();
 			
-			final String sw = environment.execute(x -> new String[] {"package", "--version", Integer.toString(version), "--in", contentPath.toString(), "--out", packagedPath.toString(), "--attribute", "key=${foo}$${foo}$$${foo}", "--attribute", "key2=${size}"});
+			final String sw = environment.execute(x -> new String[] {"flowfiles", "package", "--version", Integer.toString(version), "--in", contentPath.toString(), "--out", packagedPath.toString(), "--attribute", "key=${foo}$${foo}$$${foo}", "--attribute", "key2=${size}"});
 			
 			final FlowFileStreamResult result = reader.readValue(sw, FlowFileStreamResult.class);
 
@@ -101,7 +101,7 @@ public class AppTest {
 			final Path packagedPath = environment.getPackagedPath();
 			final Path unpackagedPath = environment.getUnpackagedPath();
 							
-			final String sw = environment.execute(x -> new String[] {"unpackage", "--version", Integer.toString(version),
+			final String sw = environment.execute(x -> new String[] {"flowfiles", "unpackage", "--version", Integer.toString(version),
 					"--in", packagedPath.toString(), "--out", unpackagedPath.toString()});
 
 			System.out.println("\t" + ConsoleColors.RED + "Result:\n" + sw.toString() + ConsoleColors.RESET);

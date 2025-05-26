@@ -6,10 +6,9 @@ import java.util.concurrent.Callable;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import com.yelloowstone.nf2t.cli.flowfiles.SubCommandGenerateSchema;
-import com.yelloowstone.nf2t.cli.flowfiles.SubCommandPackage;
-import com.yelloowstone.nf2t.cli.flowfiles.SubCommandUnpackage;
-import com.yelloowstone.nf2t.cli.jars.SubCommandValidateJar;
+import com.yelloowstone.nf2t.cli.flowfiles.SubCommandFlowFiles;
+import com.yelloowstone.nf2t.cli.jars.SubCommandJars;
+import com.yelloowstone.nf2t.mavenCentralCli.SubCommandGenerateMavenCentralZip;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -20,9 +19,10 @@ import picocli.CommandLine.Spec;
 /**
  * @author 26191568+jgwoolley@users.noreply.github.com
  */
-@Command(name = "nf2t", versionProvider = App.class, subcommands = { SubCommandUnpackage.class, SubCommandPackage.class,
-		SubCommandGenerateSchema.class,
-		SubCommandValidateJar.class }, mixinStandardHelpOptions = true, description = "A Java CLI for parsing Apache NiFi FlowFileStreams. One or more FlowFiles can be serialized into a FlowFileStream, in one of three formats.")
+@Command(name = "nf2t", versionProvider = App.class, subcommands = { SubCommandFlowFiles.class,
+		SubCommandJars.class,
+		SubCommandGenerateMavenCentralZip.class
+		}, mixinStandardHelpOptions = true, description = "A Java CLI for doing development involving Java, Maven, and Apache NiFi.")
 public class App implements Callable<Integer>, IVersionProvider {
 	public static final String FILE_SIZE_ATTRIBUTE = "size";
 

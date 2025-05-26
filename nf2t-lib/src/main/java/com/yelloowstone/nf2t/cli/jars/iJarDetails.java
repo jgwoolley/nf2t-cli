@@ -6,5 +6,5 @@ import java.util.jar.Manifest;
 public interface iJarDetails {
 	public NarDetails getNarDetails();
 	public Manifest getManifest();
-	public List<MavenPomDetails> getMavenPoms();
+	public List<MavenPomDetails> getMavenDescriptorPoms();
 }

@@ -8,13 +8,13 @@ import java.util.jar.Manifest;
 
 public class JarDetails implements iJarDetails {
 	private final NarDetails narDetails;
-	private final Manifest manifest;
-	private final List<MavenPomDetails> mavenPoms;
+	private final Manifest manifestDetails;
+	private final List<MavenPomDetails> mavenDescriptorPoms;
 	
 	public JarDetails(final NarDetails narDetails, final Manifest manifest, final List<MavenPomDetails> mavenPoms) {
 		this.narDetails = narDetails;
-		this.manifest = manifest;
-		this.mavenPoms = Collections.unmodifiableList(mavenPoms);
+		this.manifestDetails = manifest;
+		this.mavenDescriptorPoms = Collections.unmodifiableList(mavenPoms);
 	}
 	
 	@Override
@@ -24,12 +24,12 @@ public class JarDetails implements iJarDetails {
 
 	@Override
 	public Manifest getManifest() {
-		return this.manifest;
+		return this.manifestDetails;
 	}
 	
 	@Override
-	public List<MavenPomDetails> getMavenPoms() {
-		return this.mavenPoms;
+	public List<MavenPomDetails> getMavenDescriptorPoms() {
+		return this.mavenDescriptorPoms;
 	}
 	
 	public static class Builder implements iJarDetails {
@@ -60,11 +60,11 @@ public class JarDetails implements iJarDetails {
 		}
 		
 		public iJarDetails build() {
-			return new JarDetails(getNarDetails(), getManifest(), getMavenPoms());
+			return new JarDetails(getNarDetails(), getManifest(), getMavenDescriptorPoms());
 		}
 
 		@Override
-		public List<MavenPomDetails> getMavenPoms() {
+		public List<MavenPomDetails> getMavenDescriptorPoms() {
 			return List.copyOf(this.mavenPoms.values());
 		}
 
