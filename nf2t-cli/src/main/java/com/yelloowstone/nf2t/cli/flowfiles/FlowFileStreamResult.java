@@ -1,4 +1,4 @@
-package com.yelloowstone.nf2t.cli;
+package com.yelloowstone.nf2t.cli.flowfiles;
 
 import java.nio.file.Path;
 import java.util.ArrayList;

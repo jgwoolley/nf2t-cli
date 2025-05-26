@@ -1,4 +1,4 @@
-package com.yelloowstone.nf2t.cli;
+package com.yelloowstone.nf2t.cli.flowfiles;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,7 +16,7 @@ import picocli.CommandLine.IVersionProvider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
-public abstract class AbstractSubCommand implements Callable<Integer>, IVersionProvider {
+public abstract class AbstractFlowFilesSubCommand implements Callable<Integer>, IVersionProvider {
 
 	@Spec
 	private CommandSpec spec;
@@ -25,7 +25,7 @@ public abstract class AbstractSubCommand implements Callable<Integer>, IVersionP
 
 	private final Tika tika;
 
-	public AbstractSubCommand() {
+	public AbstractFlowFilesSubCommand() {
 		super();
 		this.packageVersions = new FlowFilePackageVersions();
 		this.mapper = new ObjectMapper();
@@ -50,6 +50,7 @@ public abstract class AbstractSubCommand implements Callable<Integer>, IVersionP
 
 	@Override
 	public String[] getVersion() throws Exception {
+		// This method cannot be called, it it a sub-method.
 		return new String[] {};
 	}
 

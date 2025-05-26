@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.yelloowstone.nf2t.cli.flowfiles.FlowFileStreamResult;
 
 public class AppTest {
 

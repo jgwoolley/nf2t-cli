@@ -1,4 +1,4 @@
-package com.yelloowstone.nf2t.cli;
+package com.yelloowstone.nf2t.cli.flowfiles;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -12,7 +12,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "gen-schema", description = "Generates a JSONSchema for the result of the Unpackage/Package commands.")
-public class SubCommandGenerateSchema extends AbstractSubCommand {
+public class SubCommandGenerateSchema extends AbstractFlowFilesSubCommand {
 
 	@Option(names = { "-o", "--out" }, description = "The output path.") 
 	private String outputOption;
@@ -20,7 +20,7 @@ public class SubCommandGenerateSchema extends AbstractSubCommand {
 	@Override
 	public Integer call() throws Exception {
 		SchemaFactoryWrapper visitor = new SchemaFactoryWrapper();
-		getMapper().acceptJsonFormatVisitor(com.yelloowstone.nf2t.cli.FlowFileStreamResult.class, visitor);
+		getMapper().acceptJsonFormatVisitor(FlowFileStreamResult.class, visitor);
 		JsonSchema personSchema = visitor.finalSchema();
 		String result = getMapper().writer().writeValueAsString(personSchema);
 		getSpec().commandLine().getOut().println(result);

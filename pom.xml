@@ -26,8 +26,7 @@
 	</developers>
 	<scm>
 		<connection>scm:git:git://github.com/jgwoolley/nf2t-cli.git</connection>
-		<developerConnection>
-			scm:git:ssh://github.com:jgwoolley/nf2t-cli.git</developerConnection>
+		<developerConnection>scm:git:ssh://github.com:jgwoolley/nf2t-cli.git</developerConnection>
 		<url>http://github.com/jgwoolley/nf2t-cli/tree/master</url>
 	</scm>
 	<properties>
@@ -59,4 +58,20 @@
 		<module>setup-project</module>
 		<module>nf2t-cli</module>
 	</modules>
+	<build>
+    	<plugins>
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.1.2</version>
+				<!-- 
+				<configuration>
+					<usedDependencies>
+						<dependency>org.slf4j:slf4j-nop</dependency>
+						<dependency>info.picocli:picocli-codegen</dependency>
+					</usedDependencies>
+				</configuration>
+				-->
+			</plugin>
+		</plugins>
+	</build>
 </project>

@@ -11,3 +11,4 @@ dist/
 nf2t-cli/dist/
 bin
 nf2t-cli/quick_test/
+*.nar

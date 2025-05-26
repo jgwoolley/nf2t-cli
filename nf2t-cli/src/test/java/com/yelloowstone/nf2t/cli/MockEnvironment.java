@@ -31,6 +31,9 @@ import org.apache.tika.Tika;
 import org.junit.Assert;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yelloowstone.nf2t.cli.flowfiles.FlowFilePackageVersion;
+import com.yelloowstone.nf2t.cli.flowfiles.FlowFilePackageVersions;
+import com.yelloowstone.nf2t.cli.flowfiles.FlowFileUtils;
 
 import picocli.CommandLine;
 

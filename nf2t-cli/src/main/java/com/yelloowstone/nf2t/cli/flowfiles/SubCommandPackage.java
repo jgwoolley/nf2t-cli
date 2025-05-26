@@ -1,4 +1,4 @@
-package com.yelloowstone.nf2t.cli;
+package com.yelloowstone.nf2t.cli.flowfiles;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "package", description = "Packages FlowFileStream(s), information regarding this operation sent to standard out. See command arguments for furher details.")
-public class SubCommandPackage extends AbstractSubCommand {
+public class SubCommandPackage extends AbstractFlowFilesSubCommand {
 	@Option(names = { "-v", "--version" }, defaultValue = "3", description = {
 			FlowFileStreamResult.VERSION_DESCRIPTION + " resulting FlowFile." })
 	private int version;
