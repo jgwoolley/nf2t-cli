@@ -1,4 +1,4 @@
-package com.yelloowstone.nf2t.mavenCentralCli;
+package com.yelloowstone.nf2t.maven;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -12,6 +12,9 @@ import java.util.stream.Collectors;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+
+import com.yelloowstone.nf2t.git.GitUtils;
+import com.yelloowstone.nf2t.utils.ProcessUtils;
 
 public class MavenUtils {
 	

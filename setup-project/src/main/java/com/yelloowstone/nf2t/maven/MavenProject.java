@@ -1,4 +1,4 @@
-package com.yelloowstone.nf2t.mavenCentralCli;
+package com.yelloowstone.nf2t.maven;
 
 import java.nio.file.Path;
 import java.time.Instant;

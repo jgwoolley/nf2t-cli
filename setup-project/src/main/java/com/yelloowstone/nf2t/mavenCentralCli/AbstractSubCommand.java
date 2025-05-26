@@ -7,6 +7,9 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import com.yelloowstone.nf2t.maven.MavenProject;
+import com.yelloowstone.nf2t.maven.MavenUtils;
+
 public abstract class AbstractSubCommand implements Callable<Integer> {
 
 	@Option(names = { "-w",

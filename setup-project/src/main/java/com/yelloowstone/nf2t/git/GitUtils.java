@@ -1,4 +1,4 @@
-package com.yelloowstone.nf2t.mavenCentralCli;
+package com.yelloowstone.nf2t.git;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

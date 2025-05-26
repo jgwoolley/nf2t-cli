@@ -31,6 +31,9 @@ import freemarker.template.TemplateExceptionHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
+import com.yelloowstone.nf2t.maven.MavenProject;
+import com.yelloowstone.nf2t.utils.ProcessUtils;
+
 @Command(name = "docs", description = "Packages documentation, including ManPages, and JavaDocs.")
 public class SubCommandGenerateDocs extends AbstractSubCommand {
 
