@@ -384,8 +384,14 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			final Map<String, String> buildArtifactsResult = buildArtifacts(projectPath, configuration, mavenProject);
 
 			int buildIndexResult = buildProjectIndex(projectPath, configuration, mavenProject, buildArtifactsResult);
-			if (buildIndexResult != 0)
+			if (buildIndexResult != 0) {
 				return buildIndexResult;
+			}
+			
+			final boolean isPicocli = mavenProject.isPicocli();
+			
+			System.out.println(ConsoleColors.YELLOW + "DEBUG: isPicocli: " + isPicocli + ConsoleColors.RESET);
+			
 			if (mavenProject.isPicocli()) {
 				int buildManPageResult = buildManPage(projectPath, configuration, mavenProject);
 				if (buildManPageResult != 0)
