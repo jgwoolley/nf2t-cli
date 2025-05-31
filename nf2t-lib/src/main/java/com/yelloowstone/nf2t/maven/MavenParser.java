@@ -29,6 +29,7 @@ import com.yelloowstone.nf2t.git.GitUtils;
 import com.yelloowstone.nf2t.jars.ModifiableJarDetails;
 import com.yelloowstone.nf2t.jars.ModifiableMavenDescriptorDetails;
 import com.yelloowstone.nf2t.jars.NarDetails;
+import com.yelloowstone.nf2t.jars.UnmodifiableJarDetails;
 import com.yelloowstone.nf2t.utils.ProcessUtils;
 
 public class MavenParser {
@@ -115,7 +116,7 @@ public class MavenParser {
 	}
 
 	// TODO: Decide whether or not you want to do this...
-	
+
 //	public static JarDetails.Builder parseMavenProject(final Path path) throws IOException {
 //		if (Files.isDirectory(path)) {
 //			final Path sourcePomPath = path.resolve("pom.xml");
@@ -130,12 +131,12 @@ public class MavenParser {
 //
 //			} else {
 //				// If the above is not the case, assume we are in a folder with Maven artifacts.
-//				final List<MavenArtifact> effectivePoms = new ArrayList<>();
+//				final List<MavenCoordinate> effectivePoms = new ArrayList<>();
 //
 //				Files.list(path).forEach(artifactPath -> {
 //					final String artifactFileName = artifactPath.getFileName().toString();
 //
-//					final MavenArtifact artifact = parsePomFromFileName(artifactFileName);
+//					final MavenCoordinate artifact = parsePomFromFileName(artifactFileName);
 //					if (artifact != null) {
 //						effectivePoms.add(artifact);
 //					}
@@ -144,7 +145,7 @@ public class MavenParser {
 //				Files.list(path).forEach(artifactPath -> {
 //					final String artifactFileName = artifactPath.getFileName().toString();
 //
-//					for (MavenArtifact effectivePom : effectivePoms) {
+//					for (MavenCoordinate effectivePom : effectivePoms) {
 //						final String artifactId = effectivePom.getArtifactId();
 //						if (artifactFileName.length() <= artifactId.length()
 //								|| !artifactFileName.startsWith(artifactId)) {
@@ -178,7 +179,7 @@ public class MavenParser {
 //
 //						String packaging = extension;
 //
-//						final MavenArtifact artifact = new MavenArtifact(null, artifactId, version, packaging, null,
+//						final MavenCoordinate artifact = new MavenCoordinate(null, artifactId, version, packaging, null,
 //								null, null);
 //						System.out.println(artifact);
 //					}
@@ -191,16 +192,6 @@ public class MavenParser {
 //		}
 //
 //		return null;
-//	}
-
-//	public static void main(String[] args) throws IOException {
-//		final Path path = Paths.get(".", "target");
-//		System.out.println("PARSING" + path.toAbsolutePath());
-//		final Builder value = parseMavenProject(path);
-//		final String result = new ObjectMapper().writer().writeValueAsString(value);
-//
-//		System.out.println(result);
-//
 //	}
 
 	public ModifiableJarDetails parseJar(final InputStream fileInputStream) throws IOException {
@@ -260,7 +251,81 @@ public class MavenParser {
 	private static final String SNAPSHOT_POM_ENDSWITH = "-SNAPSHOT.pom";
 	private static final String POM_ENDSWITH = ".pom";
 
-	public static MavenArtifact parsePomFromFileName(final String fileName) {
+	public MavenProject parseMavenProject(final boolean isPicocli, final Instant buildTime,
+			final MavenCoordinate[] mavenCoordinateFilters, final Path projectPath) {
+
+		final Path pomPath = projectPath.resolve("pom.xml");
+		final Path targetPath = projectPath.resolve("target");
+
+		Path artifactsPath;
+		Model mavenModel;
+
+		if (Files.isRegularFile(pomPath) && Files.isDirectory(targetPath)) {
+			artifactsPath = targetPath;
+			mavenModel = MavenParser.generateEffectivePom(projectPath);
+		} else {
+			artifactsPath = projectPath;
+			mavenModel = MavenParser.findEffectivePom(projectPath);
+		}
+
+		if (mavenModel == null) {
+			return null;
+		}
+
+		final String gitHash = GitUtils.createGitHash(projectPath);
+		final MavenCoordinate baseCoordinate = MavenCoordinate.readModel(mavenModel);
+		final Path baseArtifactPath = baseCoordinate.resolveFilePath(artifactsPath);
+
+		if (!Files.isRegularFile(baseArtifactPath)) {
+			new Exception("Path must be a file: " + baseArtifactPath).printStackTrace();
+			return null;
+		}
+
+		try (final InputStream is = Files.newInputStream(baseArtifactPath)) {
+			final UnmodifiableJarDetails jarDetails = parseJar(is).build();
+			final MavenJarArtifact baseJarArtifact = new MavenJarArtifact(baseArtifactPath, baseCoordinate, jarDetails);
+
+			final MavenProject mavenProject = new MavenProject(isPicocli, buildTime, projectPath, artifactsPath,
+					mavenModel, baseCoordinate, baseJarArtifact, gitHash);
+
+			final Path artifactParent = mavenProject.getArtifactPath();
+			if (!Files.isDirectory(artifactParent)) {
+				new Exception("Path must be a directory: " + artifactParent).printStackTrace();
+				return null;
+			}
+
+			return mavenProject;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+	}
+
+	public List<MavenProject> parseMavenProjects(final boolean isPicocli,
+			final MavenCoordinate[] mavenCoordinateFilters, final Path[] paths) {
+		final List<MavenProject> projects = new ArrayList<>();
+
+		final Instant buildTime = Instant.now();
+
+		for (final Path projectPath : paths) {
+			final MavenProject project = parseMavenProject(isPicocli, buildTime, mavenCoordinateFilters, projectPath);
+			if (project == null) {
+				System.err.println("Could not process project: " + projectPath);
+				return null;
+			}
+			projects.add(project);
+		}
+
+		return projects;
+	}
+
+	public static String getFileName(Model model, String postfix) {
+		return model.getArtifactId() + "-" + model.getVersion() + postfix;
+	}
+
+	public static MavenCoordinate parsePomFromFileName(final String fileName) {
 		if (!fileName.endsWith(POM_ENDSWITH)) {
 			return null;
 		}
@@ -279,7 +344,7 @@ public class MavenParser {
 		final String versionRaw = fileNameWithoutPostfix.substring(lastDash + 1);
 		final String version = endsWithSnapshot ? versionRaw + "-SNAPSHOT" : versionRaw;
 
-		return new MavenArtifact(null, artifactId, version, null, null, null, null);
+		return new MavenCoordinate(null, artifactId, version, null, null);
 	}
 
 	public static Model parseEffectivePom(final Path artifactPath) {
@@ -361,38 +426,13 @@ public class MavenParser {
 		return parseEffectivePom(pomPath);
 	}
 
-	public static MavenProject parseMavenProject(final boolean resolvePom, final Instant buildTime,
-			final Path projectPath) {
+	public static void main(String[] args) {
+		final Path projectPath = Path.of("..", "nf2t-cli");
 
-		final Model artifact = resolvePom ? MavenParser.generateEffectivePom(projectPath)
-				: MavenParser.findEffectivePom(projectPath);
-		if (artifact == null) {
-			return null;
-		}
+		final MavenParser parser = new MavenParser();
 
-		final String gitHash = GitUtils.createGitHash(projectPath);
-
-		return new MavenProject(resolvePom, buildTime, projectPath, artifact, gitHash);
-	}
-
-	public static List<MavenProject> parseMavenProjects(final boolean resolvePom, final Path[] paths) {
-		final List<MavenProject> projects = new ArrayList<>();
-
-		final Instant buildTime = Instant.now();
-
-		for (final Path projectPath : paths) {
-			final MavenProject project = parseMavenProject(resolvePom, buildTime, projectPath);
-			if (project == null) {
-				System.err.println("Could not process project: " + projectPath);
-				return null;
-			}
-			projects.add(project);
-		}
-
-		return projects;
-	}
-
-	public static String getFileName(Model model, String postfix) {
-		return model.getArtifactId() + "-" + model.getVersion() + postfix;
+		List<MavenProject> mavenProjects = parser.parseMavenProjects(true, new MavenCoordinate[0],
+				new Path[] { projectPath });
+		mavenProjects.forEach(System.out::println);
 	}
 }

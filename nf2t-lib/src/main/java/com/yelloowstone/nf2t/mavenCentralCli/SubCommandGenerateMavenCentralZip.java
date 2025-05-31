@@ -25,7 +25,7 @@ import picocli.CommandLine.Command;
 
 import com.yelloowstone.nf2t.maven.MavenProject;
 import com.yelloowstone.nf2t.utils.ProcessUtils;
-import com.yelloowstone.nf2t.maven.MavenArtifact;
+import com.yelloowstone.nf2t.maven.MavenCoordinate;
 
 
 @Command(name = "mavenCentral", description = "Packages Maven packages meant for the Maven Central Repository.")
@@ -86,7 +86,7 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 		try (final InputStream fis = Files.newInputStream(artifactPath)) {
 			final Map<String, MessageDigest> digests = new HashMap<>();
 
-			for (String key : MavenArtifact.DIGEST_NAMES) {
+			for (String key : MavenCoordinate.DIGEST_NAMES) {
 				digests.put(key, MessageDigest.getInstance(key));
 			}
 
@@ -128,7 +128,7 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 
 	private Integer packageProject(final String gpgUser, final MavenProject project, final ZipOutputStream zos) {
 
-		final Path targetPath = project.getArtifactParent();
+		final Path targetPath = project.getArtifactPath();
 		if (!Files.isDirectory(targetPath)) {
 			System.err.println("Path must be a directory: " + targetPath);
 			return 1;
@@ -136,8 +136,9 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 
 		final List<Path> artifactPaths = new ArrayList<>();
 
-		for (final Entry<String, String> entry : project.getMavenCentralArtifactNames().entrySet()) {
-			final String artifactName = entry.getValue();
+		for (final Entry<String, MavenCoordinate> entry : project.getBaseCoordinate().getMavenCentralArtifacts().entrySet()) {
+			final MavenCoordinate artifact = entry.getValue();
+			final String artifactName = artifact.getFileName();
 			final Path artifactPath = targetPath.resolve(artifactName);
 			artifactPaths.add(artifactPath);
 			if (!Files.isRegularFile(artifactPath)) {
@@ -171,13 +172,15 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 		if (gpgUser == null) {
 			System.err.println("GPG User not specified. This will result in an invalid Maven Central ZIP.");
 		}
-		final Path targetPath = project.getArtifactParent();
+		final Path targetPath = project.getArtifactPath();
 		if (!Files.isDirectory(targetPath)) {
 			System.err.println("Path must be a directory: " + targetPath);
 			return 1;
 		}
 
-		final Path outPath = targetPath.resolve(project.getMavenCentralArtifactName());
+		final MavenCoordinate baseCoordiante = project.getBaseCoordinate();
+		
+		final Path outPath = targetPath.resolve(baseCoordiante.getMavenCentralZip().getFileName());
 		if (Files.isRegularFile(outPath)) {
 			try {
 				Files.deleteIfExists(outPath);
@@ -197,7 +200,7 @@ public class SubCommandGenerateMavenCentralZip extends AbstractSubCommand {
 			return 1;
 		} finally {
 			System.out.println(ConsoleColors.GREEN + "Zip generated at " + outPath.toAbsolutePath() + "\nCoordinate: "
-					+ project.getCoordinate() + ConsoleColors.RESET);
+					+ baseCoordiante.getCoordinate() + ConsoleColors.RESET);
 		}
 	}
 

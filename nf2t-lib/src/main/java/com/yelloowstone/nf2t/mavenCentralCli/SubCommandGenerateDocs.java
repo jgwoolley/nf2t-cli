@@ -14,26 +14,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.asciidoctor.Asciidoctor;
 
+import com.yelloowstone.nf2t.cli.App;
+import com.yelloowstone.nf2t.jars.JarDetails;
+import com.yelloowstone.nf2t.maven.MavenCoordinate;
+import com.yelloowstone.nf2t.maven.MavenJarArtifact;
+import com.yelloowstone.nf2t.maven.MavenProject;
+import com.yelloowstone.nf2t.utils.ProcessUtils;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-
-import com.yelloowstone.nf2t.cli.App;
-import com.yelloowstone.nf2t.maven.MavenProject;
-import com.yelloowstone.nf2t.utils.ProcessUtils;
 
 @Command(name = "docs", description = "Packages documentation, including ManPages, and JavaDocs.")
 public class SubCommandGenerateDocs extends AbstractSubCommand {
@@ -131,38 +131,9 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 		return 0;
 	}
 
-	// TODO: This probably shouldn't exist... Should be in MavenProject already
-	private String readJarManifest(final Path artifactPath, final String name) {
-		if (!Files.exists(artifactPath)) {
-			System.err.println("Could not read Jar: " + artifactPath + ". It does not exist.");
-			return null;
-		}
-
-		try (final ZipFile zipFile = new ZipFile(artifactPath.toFile())) {
-			final ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
-			if (manifestEntry == null) {
-				System.err.println("No MANIFEST.MF file. Will not read");
-				return null;
-			}
-
-			try (InputStream inputStream = zipFile.getInputStream(manifestEntry);
-					InputStreamReader streamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-					BufferedReader reader = new BufferedReader(streamReader)) {
-
-				Manifest manifest = new Manifest(inputStream);
-				Attributes mainAttributes = manifest.getMainAttributes();
-				return mainAttributes.getValue(name);
-			}
-
-		} catch (Exception e) {
-			System.err.println("Could not read Jar: " + artifactPath);
-			e.printStackTrace();
-			return null;
-		}
-	}
-
 	private Integer buildManPage(final Path outPath, final Configuration configuration,
 			final MavenProject mavenProject) {
+		
 		final Path manPath = outPath.resolve("man");
 		try {
 			Files.createDirectories(manPath);
@@ -170,27 +141,18 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			e.printStackTrace();
 			return 1;
 		}
+		
+		final MavenJarArtifact baseJarArtifact = mavenProject.getBaseJarArtifact();
+		final Path jarPath = baseJarArtifact.getPath();
+		final JarDetails jarDetails = baseJarArtifact.getJarDetails();
+		final String mainClass = jarDetails.getMainClass();
 
-		final Path artifactParent = mavenProject.getArtifactParent();
-		if (!Files.isDirectory(artifactParent)) {
-			new Exception("Path must be a directory: " + artifactParent).printStackTrace();
+		if(mainClass == null) {
+			new IllegalArgumentException("Jar had no main class: " + jarPath).printStackTrace();
 			return 1;
 		}
-
-		final Path jarPath = artifactParent.resolve(mavenProject.getFileName(".jar"));
-		if (!Files.isRegularFile(jarPath)) {
-			new Exception("Path must be a file: " + jarPath).printStackTrace();
-			return 1;
-		}
-
-		final String mainClass = readJarManifest(jarPath, "Main-Class");
-		if (mainClass == null) {
-			new Exception("Jar Manifeset \"Main-Class\" not given: " + jarPath).printStackTrace();
-			return 1;
-		}
-
+		
 		try {
-
 			final Path tmpDirPath = Files.createTempDirectory("manPage");
 			final int exitCode = ProcessUtils.exec("java", "-cp", jarPath.toString(),
 					"picocli.codegen.docgen.manpage.ManPageGenerator", mainClass, "--outdir", tmpDirPath.toString());
@@ -211,7 +173,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 
 			final String extension = ".adoc";
 
-			List<Entry<Path, String>> manPaths = Files.list(tmpDirPath).map(path -> {
+			final List<Entry<Path, String>> manPaths = Files.list(tmpDirPath).map(path -> {
 				String htmlFileName = path.getFileName().toString();
 				htmlFileName = htmlFileName.substring(0, htmlFileName.length() - extension.length());
 
@@ -271,13 +233,13 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			return 1;
 		}
 
-		final Path targetPath = mavenProject.getArtifactParent();
+		final Path targetPath = mavenProject.getArtifactPath();
 		if (!Files.isDirectory(targetPath)) {
 			new Exception("Given Target path was not a directory: " + targetPath).printStackTrace();
 			return 1;
 		}
 
-		final Path javaDocJarPath = targetPath.resolve(mavenProject.getFileName("-javadoc.jar"));
+		final Path javaDocJarPath = targetPath.resolve(mavenProject.getBaseCoordinate().getDocsJar().getFileName());
 		if (!Files.isRegularFile(javaDocJarPath)) {
 			new Exception("Given JavaDoc artifact was not a file: " + javaDocJarPath).printStackTrace();
 			return 1;
@@ -346,7 +308,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 
 	private Path buildArtifact(final Path artifactsPath, final MavenProject mavenProject,
 			final String artifactFilename) {
-		final Path artifactPath = mavenProject.getArtifactParent().resolve(artifactFilename);
+		final Path artifactPath = mavenProject.getArtifactPath().resolve(artifactFilename);
 
 		if (!Files.isRegularFile(artifactPath)) {
 			System.err.println("Could not find artifact: " + artifactPath);
@@ -381,17 +343,21 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			return null;
 		}
 
-		for (final Entry<String, String> entry : mavenProject.getMavenCentralArtifactNames().entrySet()) {
+		final MavenCoordinate baseCoordinate = mavenProject.getBaseCoordinate();
+		
+		
+		
+		for (final Entry<String, MavenCoordinate> entry : baseCoordinate.getMavenCentralArtifacts().entrySet()) {
 			final String artifactKey = entry.getKey();
-			final String artifactFilename = entry.getValue();
+			final String artifactFilename = entry.getValue().getFileName();
 			final Path artifactPath = buildArtifact(artifactsPath, mavenProject, artifactFilename);
 			if (artifactPath != null) {
 				result.put(artifactKey, artifactFilename);
 			}
 		}
-		final String mavenCentralArtifactName = mavenProject.getMavenCentralArtifactName();
+		final String mavenCentralArtifactName = baseCoordinate.getMavenCentralZip().getFileName();
 		final Path mavenCentralArtifactPath = buildArtifact(artifactsPath, mavenProject,
-				mavenProject.getMavenCentralArtifactName());
+				mavenCentralArtifactName);
 		if (mavenCentralArtifactPath != null) {
 			result.put(MavenProject.MAVEN_CENTRAL_ARTIFACT_KEY, mavenCentralArtifactName);
 		}
@@ -402,7 +368,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 
 	public Integer packageDocumentation(final Path outPath, final Configuration configuration,
 			final MavenProject mavenProject) {
-		final Path projectPath = outPath.resolve(mavenProject.getMavenArtifact().getArtifactId());
+		final Path projectPath = outPath.resolve(mavenProject.getMavenModel().getArtifactId());
 
 		try {
 			Files.createDirectories(projectPath);
@@ -476,7 +442,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 
 	public static void main(String[] args) throws ParserConfigurationException, IOException {
 		int rc = new CommandLine(new SubCommandGenerateDocs()).execute(new String[] { "--gpgUser",
-				"0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73", "--workdir", "..", "nf2t-lib", "nf2t-cli" });
+				"0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73", "--workdir", "..", "--isPicocli", "nf2t-cli" });
 		System.exit(rc);
 	}
 }

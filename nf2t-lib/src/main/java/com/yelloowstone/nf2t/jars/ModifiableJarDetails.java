@@ -32,7 +32,7 @@ public class ModifiableJarDetails implements JarDetails {
 		return this.mavenPoms.computeIfAbsent(groupId + ":" + artifactId, x -> new ModifiableMavenDescriptorDetails(groupId, artifactId));
 	}
 	
-	public JarDetails build() {
+	public UnmodifiableJarDetails build() {
 		return new UnmodifiableJarDetails(getNarDetails(), getManifest(), getMavenDescriptorPoms());
 	}
 

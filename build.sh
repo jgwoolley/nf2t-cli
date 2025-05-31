@@ -36,4 +36,4 @@ fi
 
 rm -rf ./dist
 
-java -jar nf2t-cli/target/nf2t-cli-${version}.jar jars docs nf2t-cli nf2t-lib
+java -jar nf2t-cli/target/nf2t-cli-${version}.jar jars docs --isPicocli nf2t-cli nf2t-lib

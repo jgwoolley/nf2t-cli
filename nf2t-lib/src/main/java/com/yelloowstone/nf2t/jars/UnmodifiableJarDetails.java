@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.jar.Manifest;
 
-// TODO: Combine with MavenProject
 public class UnmodifiableJarDetails implements JarDetails {
 	private final NarDetails narDetails;
 	private final Manifest manifestDetails;

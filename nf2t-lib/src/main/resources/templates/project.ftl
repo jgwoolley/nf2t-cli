@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>${mavenProject.getMavenArtifact().getName()}</title>
+        <title>${mavenProject.getProjectName()}</title>
         <style>
             table, th, td {
                 border: 2px solid black; 
@@ -9,9 +9,9 @@
         </style>
     </head>
     <body>
-        <h1>${mavenProject.getMavenArtifact().getName()}</h1>
+        <h1>${mavenProject.getProjectName()}</h1>
         <p><a href="../index.html">Go to parent</a></p>
-        <p>${mavenProject.getMavenArtifact().getDescription()}</p>
+        <p>${mavenProject.getMavenModel().getDescription()}</p>
         <table>
             <thead>
                 <tr>
