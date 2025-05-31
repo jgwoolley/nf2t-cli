@@ -10,12 +10,10 @@ import java.util.Map;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 
-import com.yelloowstone.nf2t.jars.JarDetails;
-
 //TODO: Combine with JarDetails
 public class MavenProject {
 	public static final String MAVEN_CENTRAL_ARTIFACT_KEY = "Maven Central Zip";
-	
+
 	private final boolean isPicocli;
 	private final Instant buildTime;
 	private final Path projectPath;
@@ -25,9 +23,9 @@ public class MavenProject {
 	private final MavenJarArtifact baseJarArtifact;
 	private final String gitHash;
 
-
-	public MavenProject(final boolean isPicocli, final Instant buildTime, final Path projectPath, final Path artifactPath,
-			final Model mavenModel, final MavenCoordinate baseCoordinate, final MavenJarArtifact baseJarArtifact, final String gitHash) {
+	public MavenProject(final boolean isPicocli, final Instant buildTime, final Path projectPath,
+			final Path artifactPath, final Model mavenModel, final MavenCoordinate baseCoordinate,
+			final MavenJarArtifact baseJarArtifact, final String gitHash) {
 		super();
 		this.isPicocli = isPicocli;
 		this.artifactPath = artifactPath;
@@ -50,11 +48,11 @@ public class MavenProject {
 	public Model getMavenModel() {
 		return mavenModel;
 	}
-	
+
 	public MavenCoordinate getBaseCoordinate() {
 		return baseCoordinate;
 	}
-	
+
 	public MavenJarArtifact getBaseJarArtifact() {
 		return baseJarArtifact;
 	}
@@ -66,21 +64,14 @@ public class MavenProject {
 	public Path getArtifactPath() {
 		return artifactPath;
 	}
-	
+
 	public boolean isPicocli() {
-		if(this.isPicocli) {		
-			MavenJarArtifact baseJarArtifact = getBaseJarArtifact();
-			JarDetails jarDetails = baseJarArtifact.getJarDetails();
-			String mainClass = jarDetails.getMainClass();
-			return mainClass != null;
-		}
-		
-		return false;
+		return isPicocli;
 	}
-	
+
 	public String getMavenCentralZipEntryPrefix() {
 		final MavenCoordinate baseCoordinate = this.getBaseCoordinate();
-		
+
 		final StringBuilder sb = new StringBuilder("/");
 		for (final String name : baseCoordinate.getGroupId().split("\\.")) {
 			sb.append(name);
@@ -94,7 +85,7 @@ public class MavenProject {
 
 		return sb.toString();
 	}
-	
+
 	public String getCommitURL() {
 		final Object result = getMavenModel().getProperties().get("yelloowstone.commitURL");
 		if (result == null) {
@@ -103,7 +94,7 @@ public class MavenProject {
 
 		return result.toString();
 	}
-	
+
 	public String getProjectName() {
 		return mavenModel.getName() == null ? mavenModel.getArtifactId() : mavenModel.getName();
 	}
@@ -153,14 +144,16 @@ public class MavenProject {
 		properties.add(new MavenProjectProperty("Maven Artifact Version", artifact.getVersion()));
 		properties.add(new MavenProjectProperty("Maven Artifact Packaging", artifact.getPackaging()));
 		properties.add(new MavenProjectProperty("JavaDocs URL", "./javadoc/index.html", "./javadoc/index.html"));
-
 		
+		final boolean isPicocli = isPicocli();		
+		properties.add(new MavenProjectProperty("DEBUG: isPicocli", Boolean.toString(isPicocli)));
+	
 		final String mainClass = getBaseJarArtifact().getJarDetails().getMainClass();
-		if(mainClass != null) {
+		if (mainClass != null) {
 			properties.add(new MavenProjectProperty("Manifest: Main-Class", mainClass));
 		}
 		
-		if (isPicocli()) {
+		if (isPicocli) {
 			properties.add(new MavenProjectProperty("Man Page URL", "./man/index.html", "./man/index.html"));
 		}
 

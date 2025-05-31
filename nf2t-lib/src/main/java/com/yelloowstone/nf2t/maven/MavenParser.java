@@ -36,11 +36,13 @@ public class MavenParser {
 
 	private final Map<String, Consumer<Context>> parseFileLut;
 	private final List<Function<Context, Boolean>> parseFileList;
-
+	private final Map<String, String> packagingToExtensionLut;
+	
 	public MavenParser() {
 		final Map<String, Consumer<Context>> parseFileLut = new HashMap<>();
 		final List<Function<Context, Boolean>> parseFileList = new ArrayList<>();
-
+		final Map<String, String> packagingToExtensionLut = new HashMap<>();
+		
 		parseFileLut.put("META-INF/docs/extension-manifest.xml", (x) -> {
 			final NarDetails narDetails = NarDetails.parse(x.getZipInputStream(), x.getZipEntry());
 			x.getBuilder().setNarDetails(narDetails);
@@ -111,8 +113,15 @@ public class MavenParser {
 			return false;
 		});
 
+		packagingToExtensionLut.put("jar", "jar");
+		packagingToExtensionLut.put("war", "war");
+		packagingToExtensionLut.put("nar", "nar");
+		packagingToExtensionLut.put("pom", "pom");
+		
+		
 		this.parseFileLut = Collections.unmodifiableMap(parseFileLut);
 		this.parseFileList = Collections.unmodifiableList(parseFileList);
+		this.packagingToExtensionLut = Collections.unmodifiableMap(packagingToExtensionLut);
 	}
 
 	// TODO: Decide whether or not you want to do this...
@@ -251,7 +260,7 @@ public class MavenParser {
 	private static final String SNAPSHOT_POM_ENDSWITH = "-SNAPSHOT.pom";
 	private static final String POM_ENDSWITH = ".pom";
 
-	public MavenProject parseMavenProject(final boolean isPicocli, final Instant buildTime,
+	public MavenProject parseMavenProject(final boolean checkPicocli, final Instant buildTime,
 			final MavenCoordinate[] mavenCoordinateFilters, final Path projectPath) {
 
 		final Path pomPath = projectPath.resolve("pom.xml");
@@ -284,7 +293,9 @@ public class MavenParser {
 		try (final InputStream is = Files.newInputStream(baseArtifactPath)) {
 			final UnmodifiableJarDetails jarDetails = parseJar(is).build();
 			final MavenJarArtifact baseJarArtifact = new MavenJarArtifact(baseArtifactPath, baseCoordinate, jarDetails);
-
+			final String mainClass = jarDetails.getMainClass();	
+			final boolean isPicocli = checkPicocli ? mainClass != null : false;
+			
 			final MavenProject mavenProject = new MavenProject(isPicocli, buildTime, projectPath, artifactsPath,
 					mavenModel, baseCoordinate, baseJarArtifact, gitHash);
 

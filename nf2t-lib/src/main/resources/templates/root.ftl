@@ -25,13 +25,10 @@
             	<tr>
                     <td><a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/index.html">${mavenProject.getProjectName()}</a></td>
                     <td><a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/javadoc/index.html">JavaDocs Page</a></td>
-                    <td>         
-                    	<ul>
-                    		<li>${mavenProject.isPicocli()?string('true', 'false')} </li>                    	               	                                       
+                    <td>                             	               	                                       
 	                    <#if mavenProject.isPicocli() >
-	                        <li><a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/man/index.html">Man Page</a></li>
-	                    </#if>
-	                    </ul>
+	                        <a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/man/index.html">Man Page</a>
+	                    </#if>	                    
                     </td>
                 </tr>
 			  </#list>
