@@ -22,7 +22,7 @@
             <tbody>	
 			  	 <#list properties as property>
 	                <tr>
-					    <td>${property.getPropertyName()}</td>
+					    <td>${property.getPropertyName()}</td>					    
 					    <#if property.getUrl()?? >
 	                    	<td><a href="${property.getUrl()}">${property.getPropertyValue()}</a></td>
 	                    <#else>

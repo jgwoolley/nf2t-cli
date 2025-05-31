@@ -68,7 +68,7 @@ public class MavenProject {
 	}
 	
 	public boolean isPicocli() {
-		if(this.isPicocli) {
+		if(this.isPicocli) {		
 			MavenJarArtifact baseJarArtifact = getBaseJarArtifact();
 			JarDetails jarDetails = baseJarArtifact.getJarDetails();
 			String mainClass = jarDetails.getMainClass();
@@ -154,6 +154,12 @@ public class MavenProject {
 		properties.add(new MavenProjectProperty("Maven Artifact Packaging", artifact.getPackaging()));
 		properties.add(new MavenProjectProperty("JavaDocs URL", "./javadoc/index.html", "./javadoc/index.html"));
 
+		
+		final String mainClass = getBaseJarArtifact().getJarDetails().getMainClass();
+		if(mainClass != null) {
+			properties.add(new MavenProjectProperty("Manifest: Main-Class", mainClass));
+		}
+		
 		if (isPicocli()) {
 			properties.add(new MavenProjectProperty("Man Page URL", "./man/index.html", "./man/index.html"));
 		}

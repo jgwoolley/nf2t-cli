@@ -390,6 +390,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			
 			final boolean isPicocli = mavenProject.isPicocli();
 			
+			//TODO: Fix Picocli docs not appearing on GitHub CI/CD
 			System.out.println(ConsoleColors.YELLOW + "DEBUG: isPicocli: " + isPicocli + ConsoleColors.RESET);
 			
 			if (isPicocli) {

@@ -23,15 +23,15 @@ pwd
 echo "Running mvn install"
 
 if [ "${mode}" == "server" ]; then
-    mvn install --quiet
+    mvn clean install --quiet
 else
-    mvn install
+    mvn clean install
 fi
 
 if [ "${mode}" == "server" ]; then
-    java -jar nf2t-cli/target/nf2t-cli-${version}.jar mavenCentral nf2t-cli nf2t-lib
+    java -jar nf2t-cli/target/nf2t-cli-${version}.jar mavenCentral --isPicocli nf2t-cli nf2t-lib
 else 
-    java -jar nf2t-cli/target/nf2t-cli-${version}.jar mavenCentral --gpgUser 0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73 nf2t-cli
+    java -jar nf2t-cli/target/nf2t-cli-${version}.jar mavenCentral --isPicocli --gpgUser 0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73 nf2t-cli
 fi 
 
 rm -rf ./dist
