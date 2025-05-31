@@ -6,6 +6,7 @@ import java.nio.file.Path;
 
 public class GitUtils {
 	
+	// TODO: Think about just parsing from the file system...	
 	public static String createGitHash(Path path) {
 		try {
 			final ProcessBuilder builder = new ProcessBuilder("git", "log", "-1", "--pretty=format:'%H'");

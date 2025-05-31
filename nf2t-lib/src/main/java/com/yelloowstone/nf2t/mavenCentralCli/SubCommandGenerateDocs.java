@@ -131,6 +131,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 		return 0;
 	}
 
+	// TODO: This probably shouldn't exist... Should be in MavenProject already
 	private String readJarManifest(final Path artifactPath, final String name) {
 		if (!Files.exists(artifactPath)) {
 			System.err.println("Could not read Jar: " + artifactPath + ". It does not exist.");
@@ -184,6 +185,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 
 		final String mainClass = readJarManifest(jarPath, "Main-Class");
 		if (mainClass == null) {
+			new Exception("Jar Manifeset \"Main-Class\" not given: " + jarPath).printStackTrace();
 			return 1;
 		}
 
@@ -241,6 +243,8 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 					Files.writeString(htmlPath, htmlContent);
 				} catch (IOException e) {
 					e.printStackTrace();
+					// TODO: Check if this is a good option
+					return 1;
 				}
 			}
 
@@ -472,7 +476,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 
 	public static void main(String[] args) throws ParserConfigurationException, IOException {
 		int rc = new CommandLine(new SubCommandGenerateDocs()).execute(new String[] { "--gpgUser",
-				"0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73", "--workdir", "..", "setup-project", "nf2t-cli" });
+				"0xCED254CF741FE1663B9BEC32D12C9545C6D5AA73", "--workdir", "..", "nf2t-lib", "nf2t-cli" });
 		System.exit(rc);
 	}
 }

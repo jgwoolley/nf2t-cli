@@ -1,4 +1,4 @@
-package com.yelloowstone.nf2t.cli.jars;
+package com.yelloowstone.nf2t.jars;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -64,8 +64,6 @@ public class NarDetails {
 		
 		final NodeList extensionsNodeList = document.getElementsByTagName("extensions");
 		final Element extensionsNode = (Element) extensionsNodeList.item(0);
-
-		
 		
 		final NodeList extensionNodeList = extensionsNode.getElementsByTagName("extension");
 		for (int index = 0; index < extensionNodeList.getLength(); index++) {

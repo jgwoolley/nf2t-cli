@@ -1,4 +1,4 @@
-package com.yelloowstone.nf2t.cli.jars;
+package com.yelloowstone.nf2t.jars;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;

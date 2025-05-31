@@ -62,6 +62,8 @@ public abstract class AbstractFlowFilesSubCommand implements Callable<Integer>, 
 		return FlowFileUtils.generateDefaultAttributes(getTika(), path, contentSize);
 	}
 
+	
+	// TODO: Split logic out of SubCommands? Move subcommands into nf2t-cli ??? Because it broke man page generation...
 	public FlowFileStreamResult createResult(final int version, String extension, final boolean uuidFilenames,
 			final String inputOption, String outputOption, final String resultsOption,
 			final Map<String, String> attributeExpressions, boolean keepAttributes) {

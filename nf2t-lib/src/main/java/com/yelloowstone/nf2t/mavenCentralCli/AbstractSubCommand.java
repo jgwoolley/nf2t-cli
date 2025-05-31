@@ -7,8 +7,8 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import com.yelloowstone.nf2t.maven.MavenParser;
 import com.yelloowstone.nf2t.maven.MavenProject;
-import com.yelloowstone.nf2t.maven.MavenUtils;
 
 public abstract class AbstractSubCommand implements Callable<Integer> {
 
@@ -56,7 +56,7 @@ public abstract class AbstractSubCommand implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws Exception {
-		final List<MavenProject> mavenProjects = MavenUtils.parseMavenProjects(isResolvePom(), getInputPaths());
+		final List<MavenProject> mavenProjects = MavenParser.parseMavenProjects(isResolvePom(), getInputPaths());
 		if(mavenProjects == null) {
 			return 1;
 		}

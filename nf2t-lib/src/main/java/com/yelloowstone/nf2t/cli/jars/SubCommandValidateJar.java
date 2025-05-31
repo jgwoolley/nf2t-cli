@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yelloowstone.nf2t.jars.JarDetails;
+import com.yelloowstone.nf2t.maven.MavenParser;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
@@ -19,7 +21,7 @@ public class SubCommandValidateJar implements Callable<Integer>, IVersionProvide
 	@Parameters
 	private Path[] narPaths;
 	private final ObjectMapper mapper;
-	private final JarParser jarParser;
+	private final MavenParser jarParser;
 
 	@Spec
 	private CommandSpec spec;
@@ -27,7 +29,7 @@ public class SubCommandValidateJar implements Callable<Integer>, IVersionProvide
 	public SubCommandValidateJar() {
 		super();
 		this.mapper = new ObjectMapper();
-		this.jarParser = new JarParser();
+		this.jarParser = new MavenParser();
 	}
 
 	@Override
@@ -45,7 +47,7 @@ public class SubCommandValidateJar implements Callable<Integer>, IVersionProvide
 			}
 
 			try (final InputStream fileInputStream = Files.newInputStream(narPath)) {				
-				final iJarDetails jarDetails = jarParser.parse(fileInputStream).build();
+				final JarDetails jarDetails = jarParser.parseJar(fileInputStream).build();
 
 				final String result = this.mapper.writer().writeValueAsString(jarDetails);
 				getSpec().commandLine().getOut().println(result);
