@@ -26,7 +26,7 @@
                     <td><a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/index.html">${mavenProject.getProjectName()}</a></td>
                     <td><a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/javadoc/index.html">JavaDocs Page</a></td>
                     <td>                             	               	                                       
-	                    <#if mavenProject.isPicocli() >
+	                    <#if true >
 	                        <a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/man/index.html">Man Page</a>
 	                    </#if>	                    
                     </td>

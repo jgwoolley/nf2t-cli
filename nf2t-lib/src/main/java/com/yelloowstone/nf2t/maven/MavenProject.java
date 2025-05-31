@@ -145,6 +145,7 @@ public class MavenProject {
 		properties.add(new MavenProjectProperty("Maven Artifact Packaging", artifact.getPackaging()));
 		properties.add(new MavenProjectProperty("JavaDocs URL", "./javadoc/index.html", "./javadoc/index.html"));
 		
+		// TODO: Checking whether or not something is picocli seems to not work on GitHub Runners...
 		final boolean isPicocli = isPicocli();		
 		properties.add(new MavenProjectProperty("DEBUG: isPicocli", Boolean.toString(isPicocli)));
 	
@@ -153,9 +154,7 @@ public class MavenProject {
 			properties.add(new MavenProjectProperty("Manifest: Main-Class", mainClass));
 		}
 		
-		if (isPicocli) {
-			properties.add(new MavenProjectProperty("Man Page URL", "./man/index.html", "./man/index.html"));
-		}
+		properties.add(new MavenProjectProperty("Man Page URL", "./man/index.html", "./man/index.html"));
 
 		if (buildArtifactsResult != null) {
 			buildArtifactsResult.entrySet().stream().sorted((a, b) -> a.getKey().compareTo(b.getKey())).forEach(x -> {

@@ -393,15 +393,17 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			//TODO: Fix Picocli docs not appearing on GitHub CI/CD
 			System.out.println(ConsoleColors.YELLOW + "DEBUG: isPicocli: " + isPicocli + ConsoleColors.RESET);
 			
-			if (isPicocli) {
+			if(isPicocli) {
 				int buildManPageResult = buildManPage(projectPath, configuration, mavenProject);
-				if (buildManPageResult != 0)
+				if (buildManPageResult != 0) {
 					return buildIndexResult;
-			}
+				}
+			}		
 
 			int buildJavaDocsResult = buildJavaDocs(projectPath, configuration, mavenProject);
-			if (buildJavaDocsResult != 0)
+			if (buildJavaDocsResult != 0) {
 				return buildIndexResult;
+			}
 		} catch (Exception e) {
 			System.err.println("Error in creating Documentation for Project: " + mavenProject);
 			e.printStackTrace();

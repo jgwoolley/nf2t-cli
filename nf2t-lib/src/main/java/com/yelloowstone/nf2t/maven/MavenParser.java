@@ -439,7 +439,6 @@ public class MavenParser {
 
 	public static void main(String[] args) {
 		final Path projectPath = Path.of("..", "nf2t-cli");
-
 		final MavenParser parser = new MavenParser();
 
 		List<MavenProject> mavenProjects = parser.parseMavenProjects(true, new MavenCoordinate[0],
