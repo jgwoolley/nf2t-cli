@@ -260,6 +260,10 @@ public class MavenParser {
 	private static final String SNAPSHOT_POM_ENDSWITH = "-SNAPSHOT.pom";
 	private static final String POM_ENDSWITH = ".pom";
 
+	public String getExtensionFromMavenPackaging(String packaging) {
+		return this.packagingToExtensionLut.get(packaging);
+	}
+	
 	public MavenProject parseMavenProject(final boolean checkPicocli, final Instant buildTime,
 			final MavenCoordinate[] mavenCoordinateFilters, final Path projectPath) {
 

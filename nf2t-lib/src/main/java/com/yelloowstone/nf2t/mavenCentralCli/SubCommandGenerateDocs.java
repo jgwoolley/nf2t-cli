@@ -142,83 +142,100 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			return 1;
 		}
 		
-		final MavenJarArtifact baseJarArtifact = mavenProject.getBaseJarArtifact();
-		final Path jarPath = baseJarArtifact.getPath();
-		final JarDetails jarDetails = baseJarArtifact.getJarDetails();
-		final String mainClass = jarDetails.getMainClass();
+		final Path indexPath = manPath.resolve("index.html");
+		
+		if(mavenProject.isPicocli()) {
+			final MavenJarArtifact baseJarArtifact = mavenProject.getBaseJarArtifact();
+			final Path jarPath = baseJarArtifact.getPath();
+			final JarDetails jarDetails = baseJarArtifact.getJarDetails();
+			final String mainClass = jarDetails.getMainClass();
 
-		if(mainClass == null) {
-			new IllegalArgumentException("Jar had no main class: " + jarPath).printStackTrace();
-			return 1;
+			if(mainClass == null) {
+				new IllegalArgumentException("Jar had no main class: " + jarPath).printStackTrace();
+				return 1;
+			}
+			
+			try {
+				final Path tmpDirPath = Files.createTempDirectory("manPage");
+				final int exitCode = ProcessUtils.exec("java", "-cp", jarPath.toString(),
+						"picocli.codegen.docgen.manpage.ManPageGenerator", mainClass, "--outdir", tmpDirPath.toString());
+
+				if (exitCode != 0) {
+					return exitCode;
+				}
+
+				final Asciidoctor asciidoctor = Asciidoctor.Factory.create();
+
+				final org.asciidoctor.Attributes attributes = org.asciidoctor.Attributes.builder()
+						.attribute("doctype", "manpage").build();
+
+				final org.asciidoctor.Options options = org.asciidoctor.Options.builder().attributes(attributes)
+//			                .safe(org.asciidoctor.SafeMode.SAFE)
+//			                .backend("manpage") //Optional, but recommended
+						.build();
+
+				final String extension = ".adoc";
+
+				final List<Entry<Path, String>> manPaths = Files.list(tmpDirPath).map(path -> {
+					String htmlFileName = path.getFileName().toString();
+					htmlFileName = htmlFileName.substring(0, htmlFileName.length() - extension.length());
+
+					return Map.entry(path, htmlFileName);
+				}).collect(Collectors.toList());
+
+				manPaths.sort((a, b) -> {
+					return a.getValue().length() - b.getValue().length();
+				});
+
+				final Entry<Path, String> mainCommand = manPaths.get(0);
+
+				for (Entry<Path, String> entry : manPaths) {
+					final Path path = entry.getKey();
+
+					if (mainCommand.getValue().length() != entry.getValue().length()) {
+						final String command = entry.getValue().substring(mainCommand.getValue().length() + 1,
+								entry.getValue().length());
+						System.out.println("Parsed Command: " + command);
+					}
+
+					final String htmlFileName = entry.getValue() + ".html";
+
+					try {
+						final String asciidocContent = Files.readString(path);
+						final String htmlContent = asciidoctor.convert(asciidocContent, options);
+						final Path htmlPath = manPath.resolve(htmlFileName);
+
+						Files.writeString(htmlPath, htmlContent);
+					} catch (IOException e) {
+						e.printStackTrace();
+						// TODO: Check if this is a good option
+						return 1;
+					}
+				}
+
+				final Path htmlPath = manPath.resolve(mainCommand.getValue() + ".html");
+				Files.deleteIfExists(indexPath);
+				Files.copy(htmlPath, indexPath);
+			} catch (Exception e) {
+				System.err.println("Could not write ZipEntry.");
+				e.printStackTrace();
+				return 1;
+			}
+		} else {
+			try {
+				final String htmlContent = "<html><head><title>Invalid Man Page</title></head><body><p><a href=\"../index.html\">Go to parent</a></p></body></html>";
+				
+		        
+
+				Files.writeString(indexPath, htmlContent);
+			} catch (IOException e) {
+				e.printStackTrace();
+				// TODO: Check if this is a good option
+				return 1;
+			}
 		}
 		
-		try {
-			final Path tmpDirPath = Files.createTempDirectory("manPage");
-			final int exitCode = ProcessUtils.exec("java", "-cp", jarPath.toString(),
-					"picocli.codegen.docgen.manpage.ManPageGenerator", mainClass, "--outdir", tmpDirPath.toString());
-
-			if (exitCode != 0) {
-				return exitCode;
-			}
-
-			final Asciidoctor asciidoctor = Asciidoctor.Factory.create();
-
-			final org.asciidoctor.Attributes attributes = org.asciidoctor.Attributes.builder()
-					.attribute("doctype", "manpage").build();
-
-			final org.asciidoctor.Options options = org.asciidoctor.Options.builder().attributes(attributes)
-//		                .safe(org.asciidoctor.SafeMode.SAFE)
-//		                .backend("manpage") //Optional, but recommended
-					.build();
-
-			final String extension = ".adoc";
-
-			final List<Entry<Path, String>> manPaths = Files.list(tmpDirPath).map(path -> {
-				String htmlFileName = path.getFileName().toString();
-				htmlFileName = htmlFileName.substring(0, htmlFileName.length() - extension.length());
-
-				return Map.entry(path, htmlFileName);
-			}).collect(Collectors.toList());
-
-			manPaths.sort((a, b) -> {
-				return a.getValue().length() - b.getValue().length();
-			});
-
-			final Entry<Path, String> mainCommand = manPaths.get(0);
-
-			for (Entry<Path, String> entry : manPaths) {
-				final Path path = entry.getKey();
-
-				if (mainCommand.getValue().length() != entry.getValue().length()) {
-					final String command = entry.getValue().substring(mainCommand.getValue().length() + 1,
-							entry.getValue().length());
-					System.out.println("Parsed Command: " + command);
-				}
-
-				final String htmlFileName = entry.getValue() + ".html";
-
-				try {
-					final String asciidocContent = Files.readString(path);
-					final String htmlContent = asciidoctor.convert(asciidocContent, options);
-					final Path htmlPath = manPath.resolve(htmlFileName);
-
-					Files.writeString(htmlPath, htmlContent);
-				} catch (IOException e) {
-					e.printStackTrace();
-					// TODO: Check if this is a good option
-					return 1;
-				}
-			}
-
-			final Path htmlPath = manPath.resolve(mainCommand.getValue() + ".html");
-			final Path indexPath = manPath.resolve("index.html");
-			Files.deleteIfExists(indexPath);
-			Files.copy(htmlPath, indexPath);
-		} catch (Exception e) {
-			System.err.println("Could not write ZipEntry.");
-			e.printStackTrace();
-			return 1;
-		}
+		
 
 		return 0;
 	}
@@ -393,11 +410,9 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			//TODO: Fix Picocli docs not appearing on GitHub CI/CD
 			System.out.println(ConsoleColors.YELLOW + "DEBUG: isPicocli: " + isPicocli + ConsoleColors.RESET);
 			
-			if(isPicocli) {
-				int buildManPageResult = buildManPage(projectPath, configuration, mavenProject);
-				if (buildManPageResult != 0) {
-					return buildIndexResult;
-				}
+			int buildManPageResult = buildManPage(projectPath, configuration, mavenProject);
+			if (buildManPageResult != 0) {
+				return buildIndexResult;
 			}		
 
 			int buildJavaDocsResult = buildJavaDocs(projectPath, configuration, mavenProject);
