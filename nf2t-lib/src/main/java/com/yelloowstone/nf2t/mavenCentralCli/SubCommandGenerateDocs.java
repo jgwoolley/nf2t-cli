@@ -223,10 +223,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			}
 		} else {
 			try {
-				final String htmlContent = "<html><head><title>Invalid Man Page</title></head><body><p><a href=\"../index.html\">Go to parent</a></p></body></html>";
-				
-		        
-
+				final String htmlContent = "<html><head><title>Invalid Man Page</title></head><body><h1>Invalid Man Page</h1><p><a href=\"../index.html\">Go to parent</a></p></body></html>";				        
 				Files.writeString(indexPath, htmlContent);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -257,67 +254,75 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 		}
 
 		final Path javaDocJarPath = targetPath.resolve(mavenProject.getBaseCoordinate().getDocsJar().getFileName());
-		if (!Files.isRegularFile(javaDocJarPath)) {
-			new Exception("Given JavaDoc artifact was not a file: " + javaDocJarPath).printStackTrace();
-			return 1;
-		}
+		
+		final boolean isJavaDoc = Files.isRegularFile(javaDocJarPath);
+		
+		if (isJavaDoc) {
+			try (ZipInputStream sourceZip = new ZipInputStream(Files.newInputStream(javaDocJarPath))) {
 
-		try (ZipInputStream sourceZip = new ZipInputStream(Files.newInputStream(javaDocJarPath))) {
+				ZipEntry entry;
+				while ((entry = sourceZip.getNextEntry()) != null) {
+					final String entryName = entry.getName();
+					final Path entryPath = javaDocPath.resolve(entryName);
 
-			ZipEntry entry;
-			while ((entry = sourceZip.getNextEntry()) != null) {
-				final String entryName = entry.getName();
-				final Path entryPath = javaDocPath.resolve(entryName);
-
-				if (entry.isDirectory()) {
-					Files.createDirectories(entryPath);
-					continue;
-				}
-				Files.createDirectories(entryPath.getParent());
-
-				try (final OutputStream os = Files.newOutputStream(entryPath)) {
-					// Copy the data
-					byte[] buffer = new byte[1024];
-					int len;
-					while ((len = sourceZip.read(buffer)) > 0) {
-						os.write(buffer, 0, len);
-					}
-
-					sourceZip.closeEntry();
-				}
-
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			return 1;
-		}
-
-		try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(javaDocJarPath))) {
-			ZipEntry entry = zipIn.getNextEntry();
-			while (entry != null) {
-				try {
-					final Path entryPath = javaDocPath.resolve(entry.getName());
 					if (entry.isDirectory()) {
 						Files.createDirectories(entryPath);
-					} else {
-						Files.createDirectories(entryPath.getParent()); // Ensure parent dirs exist
-						Files.copy(zipIn, entryPath, StandardCopyOption.REPLACE_EXISTING); // Corrected line
+						continue;
 					}
-					zipIn.closeEntry();
-					entry = zipIn.getNextEntry();
-				} catch (Exception e) {
-					System.err
-							.println("Could not parse JavaDoc Jar: " + javaDocJarPath + ". Entry: " + entry.getName());
-					e.printStackTrace();
-					return 1;
+					Files.createDirectories(entryPath.getParent());
+
+					try (final OutputStream os = Files.newOutputStream(entryPath)) {
+						// Copy the data
+						byte[] buffer = new byte[1024];
+						int len;
+						while ((len = sourceZip.read(buffer)) > 0) {
+							os.write(buffer, 0, len);
+						}
+
+						sourceZip.closeEntry();
+					}
+
 				}
 
+			} catch (Exception e) {
+				e.printStackTrace();
+				return 1;
 			}
-		} catch (Exception e) {
-			System.err.println("Could not parse JavaDoc Jar: " + javaDocJarPath);
-			e.printStackTrace();
-			return 1;
+
+			try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(javaDocJarPath))) {
+				ZipEntry entry = zipIn.getNextEntry();
+				while (entry != null) {
+					try {
+						final Path entryPath = javaDocPath.resolve(entry.getName());
+						if (entry.isDirectory()) {
+							Files.createDirectories(entryPath);
+						} else {
+							Files.createDirectories(entryPath.getParent()); // Ensure parent dirs exist
+							Files.copy(zipIn, entryPath, StandardCopyOption.REPLACE_EXISTING); // Corrected line
+						}
+						zipIn.closeEntry();
+						entry = zipIn.getNextEntry();
+					} catch (Exception e) {
+						System.err
+								.println("Could not parse JavaDoc Jar: " + javaDocJarPath + ". Entry: " + entry.getName());
+						e.printStackTrace();
+						return 1;
+					}
+
+				}
+			} catch (Exception e) {
+				System.err.println("Could not parse JavaDoc Jar: " + javaDocJarPath);
+				e.printStackTrace();
+				return 1;
+			}
+		} else {
+			final String htmlContent = "<html><head><title>No JavaDoc Available</title></head><body><h1>No JavaDoc Available</h1><p><a href=\"../index.html\">Go to parent</a></p></body></html>";	  
+			try {
+				Files.writeString(javaDocPath.resolve("index.html"), htmlContent);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return 1;
+			}
 		}
 
 		return 0;
