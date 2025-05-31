@@ -392,7 +392,7 @@ public class SubCommandGenerateDocs extends AbstractSubCommand {
 			
 			System.out.println(ConsoleColors.YELLOW + "DEBUG: isPicocli: " + isPicocli + ConsoleColors.RESET);
 			
-			if (mavenProject.isPicocli()) {
+			if (isPicocli) {
 				int buildManPageResult = buildManPage(projectPath, configuration, mavenProject);
 				if (buildManPageResult != 0)
 					return buildIndexResult;

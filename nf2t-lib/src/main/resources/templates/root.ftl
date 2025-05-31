@@ -25,11 +25,12 @@
             	<tr>
                     <td><a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/index.html">${mavenProject.getProjectName()}</a></td>
                     <td><a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/javadoc/index.html">JavaDocs Page</a></td>
-                    <#if mavenProject.isPicocli() >
-                        <td><a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/man/index.html">Man Page</a></td>
-                    <#else>
-                    	<td></td>
-                    </#if>
+                    <td>         
+                    	${mavenProject.isPicocli()?string('true', 'false')}                                            
+	                    <#if mavenProject.isPicocli() >
+	                        <a href="./${mavenProject.getBaseCoordinate().getArtifactId()}/man/index.html">Man Page</a>
+	                    </#if>
+                    </td>
                 </tr>
 			  </#list>
             </tbody>
